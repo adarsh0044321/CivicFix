@@ -215,7 +215,7 @@ flowchart TD
 ### 🛡️ 2. Municipal Operations Command Center (`AdminCommandView`)
 - **Universal Triage & Dispatch**: Filter municipal complaints across 67 wards and 5 departments; assign work orders to contractors with custom dispatch directives.
 - **SLA Breach Monitoring**: Real-time countdown tracking with automated escalation when deadlines are breached (`OVERDUE` alerts).
-- **GIS Defect Heatmap**: PostGIS spatial density clustering pinpointing recurring infrastructure failure clusters across the city.
+- **GIS Defect Heatmap**: PostGIS spatial density clustering and Mapbox GL JS engine (engineered by Nayam Raj [@Nayamraj-2K30]) pinpointing recurring infrastructure failure clusters across the city.
 - **Route-Guarded URL Security**: Any unauthorized attempt to access `/admin` or `#admin` is intercepted and blocked with an administrative credential barrier.
 
 ### 🔨 3. Contractor Workbench (`ContractorView`)
