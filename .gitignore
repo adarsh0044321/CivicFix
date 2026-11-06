@@ -1,0 +1,42 @@
+# =============================================================================
+# CivicFix - Git Ignore Rules
+# =============================================================================
+
+# --- Environment Secrets (CRITICAL: Never commit these!) ---
+.env
+*.env.local
+
+# --- Java / Maven Build Artifacts ---
+backend/target/
+*.class
+*.jar
+*.war
+
+# --- IDE Files ---
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# --- Node.js / Frontend ---
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Temporary Research Files ---
+temp_repos/
+solution_blueprints/
+
+# --- Python & System Temp ---
+__pycache__/
+*.pyc
+.system_generated/
+
+# --- Logs ---
+*.log

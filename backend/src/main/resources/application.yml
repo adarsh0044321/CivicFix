@@ -1,0 +1,83 @@
+# =============================================================================
+# CivicFix Backend - Application Configuration
+# =============================================================================
+#
+# HOW THIS FILE WORKS:
+# Spring Boot reads this file on startup and uses the values to configure
+# the embedded web server, database connection, Hibernate ORM, and security.
+#
+# IMPORTANT SECURITY RULE:
+# ${VARIABLE_NAME} syntax reads values from environment variables.
+# This means your database password is NEVER stored in this file.
+# You set the actual values in a .env file or your system environment.
+# =============================================================================
+
+# --- Server Configuration ---
+server:
+  port: 8081
+
+# --- Spring Application ---
+spring:
+  application:
+    name: civicfix-backend
+
+  # --- PostgreSQL / Supabase Database Connection ---
+  # WHAT THESE PROPERTIES DO:
+  #   url      = The JDBC connection string pointing to your Supabase PostgreSQL instance.
+  #   username = The database user (Supabase uses 'postgres' by default).
+  #   password = Read from the SUPABASE_DB_PASSWORD environment variable.
+  #
+  # WHY WE USE ${...} SYNTAX:
+  #   If we wrote the password directly here, anyone who sees this file
+  #   (on GitHub, on a teammate's screen, in a hackathon projector) would
+  #   have full access to your database. Environment variables keep secrets
+  #   outside of source code.
+  datasource:
+    url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=disable
+    username: ${SUPABASE_DB_USER:postgres.cxhjznnmuceltmlzmnwr}
+    password: ${SUPABASE_DB_PASSWORD:jaisingh@004}
+    driver-class-name: org.postgresql.Driver
+
+    # Connection pool settings (HikariCP - the default pool in Spring Boot)
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000
+      initialization-fail-timeout: -1
+
+  # --- Hibernate / JPA Configuration ---
+  # WHAT THESE PROPERTIES DO:
+  #   ddl-auto = "update" means Hibernate will CREATE tables that don't exist
+  #              and ALTER tables when entity fields change.
+  #              In production, you would use "validate" or Flyway migrations.
+  #   dialect  = Tells Hibernate to use PostGIS spatial functions (ST_DWithin, etc.)
+  #              instead of standard PostgreSQL functions.
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+    open-in-view: false
+
+# --- JWT Security Configuration ---
+# jwt.secret = A 256-bit secret key for signing JWT tokens.
+#              NEVER share this value. Read from environment variable.
+# jwt.expiration-ms = Token validity period (24 hours = 86400000 milliseconds)
+jwt:
+  secret: ${JWT_SECRET:civicfix-default-dev-secret-key-change-in-production-2026}
+  expiration-ms: 86400000
+
+# --- Gemini Flash Multimodal & Voice AI Configuration ---
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-3.5-flash}
+
+# --- Logging ---
+logging:
+  level:
+    com.civicfix: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
