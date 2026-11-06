@@ -129,6 +129,10 @@ public class ComplaintResponseDto {
     public boolean isOverdue() { return isOverdue; }
     public boolean isDuplicate() { return isDuplicate; }
     public String getDuplicateGroupId() { return duplicateGroupId; }
+    public Integer getCitizenRating() { return citizenRating; }
+    public void setCitizenRating(Integer citizenRating) { this.citizenRating = citizenRating; }
+    public String getReviewTag() { return reviewTag; }
+    public void setReviewTag(String reviewTag) { this.reviewTag = reviewTag; }
     public String getDepartmentName() { return departmentName; }
     public String getAssignedWorkerName() { return assignedWorkerName; }
     public String getReporterName() { return reporterName; }

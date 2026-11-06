@@ -4,6 +4,8 @@ import com.civicfix.dto.ComplaintResponseDto;
 import com.civicfix.dto.CreateComplaintRequestDto;
 import com.civicfix.dto.PriorityBreakdownDto;
 import com.civicfix.dto.StatusTransitionRequestDto;
+import com.civicfix.dto.StatusLogResponseDto;
+import com.civicfix.dto.CivicMetricsSummaryDto;
 import com.civicfix.entity.Complaint;
 import com.civicfix.entity.Department;
 import com.civicfix.entity.StatusLog;

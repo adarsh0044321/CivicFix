@@ -250,7 +250,9 @@ flowchart TD
 | `GET` | `/api/v1/public/complaints/{complaintId}` | Public | Public citizen tracker by human-readable ID (`CFX-2026-XXXXX`) |
 | `POST` | `/api/v1/complaints/{id}/upvote` | Public / Citizen | Toggles community upvote confirmation |
 | `GET` | `/api/v1/complaints/{id}/priority-breakdown` | Public | Returns transparent 5-factor mathematical score breakdown |
-| `POST` | `/api/v1/complaints/{id}/transition-status` | Role Guarded | Transitions state (`IN_PROGRESS`, `AWAITING_VERIFICATION`, `VERIFIED_RESOLVED`) |
+| `POST` | `/api/v1/complaints/{id}/transition-status` | Role Guarded | Transitions state (`IN_PROGRESS`, `AWAITING_VERIFICATION`, `VERIFIED_RESOLVED`) with citizen rating |
+| `GET` | `/api/v1/complaints/{id}/timeline` | Authenticated / Public | Returns chronological audit trail of state transitions, actor logs, and remarks |
+| `GET` | `/api/v1/complaints/analytics/summary` | Public / Admin | Aggregated municipal performance metrics, turnaround SLA, and citizen satisfaction |
 | `POST` | `/api/v1/complaints/sla/evaluate` | Admin / Cron | Evaluates and flags overdue SLA breaches across all wards |
 | `POST` | `/api/v1/ai/analyze-image` | Public / Citizen | Multimodal Gemini Vision triage returning category, severity, and hazards |
 | `POST` | `/api/v1/ai/transcribe-voice` | Public / Citizen | Regional Odia/Hindi/English voice transcription and entity extraction |

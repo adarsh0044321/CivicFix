@@ -4,6 +4,8 @@ import com.civicfix.dto.ComplaintResponseDto;
 import com.civicfix.dto.CreateComplaintRequestDto;
 import com.civicfix.dto.PriorityBreakdownDto;
 import com.civicfix.dto.StatusTransitionRequestDto;
+import com.civicfix.dto.StatusLogResponseDto;
+import com.civicfix.dto.CivicMetricsSummaryDto;
 import com.civicfix.service.ComplaintService;
 import com.civicfix.service.SlaEscalationScheduler;
 import jakarta.validation.Valid;

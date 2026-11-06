@@ -22,6 +22,8 @@ public class StatusTransitionRequestDto {
     private String disputeReason;
     private String actorRole;
     private String actorId;
+    private Integer rating;
+    private String reviewTag;
 
     public StatusTransitionRequestDto() {}
 

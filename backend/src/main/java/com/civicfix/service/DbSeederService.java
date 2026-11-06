@@ -186,6 +186,10 @@ public class DbSeederService implements CommandLineRunner {
         c.setDuplicate(duplicate);
         c.setDuplicateGroupId(dupGroupId);
         c.setParentComplaint(parent);
+        if (status == ComplaintStatus.VERIFIED_RESOLVED && c.getCitizenRating() == null) {
+            c.setCitizenRating(5);
+            c.setReviewTag("⚡ Prompt 24h SLA");
+        }
         c.setDepartment(dept);
         c.setReporter(reporter);
         c.setAssignedWorker(worker);

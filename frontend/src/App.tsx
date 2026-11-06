@@ -151,7 +151,9 @@ export default function App() {
     targetStatus: ComplaintStatus,
     notes?: string,
     resolutionPhotoUrl?: string,
-    disputeReason?: string
+    disputeReason?: string,
+    rating?: number,
+    reviewTag?: string
   ): Promise<Complaint> => {
     try {
       const updated = await transitionComplaintStatus(
@@ -159,7 +161,9 @@ export default function App() {
         targetStatus,
         notes,
         resolutionPhotoUrl,
-        disputeReason
+        disputeReason,
+        rating,
+        reviewTag
       );
       setComplaints((prev) => prev.map((c) => (c.id === id ? updated : c)));
       setSelectedComplaint(updated);

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Complaint, CreateComplaintInput, UserRole, DuplicateCandidate, DuplicateCheckRequest, ComplaintStatus } from '../types';
+import type { Complaint, CreateComplaintInput, UserRole, DuplicateCandidate, DuplicateCheckRequest, ComplaintStatus, StatusLogEntry, CivicMetricsSummary } from '../types';
 
 export interface AuthResponse {
   token: string;
