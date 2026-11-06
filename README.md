@@ -17,13 +17,14 @@ CivicFix connects urban citizens, municipal administrators, field contractors, a
 
 ---
 
-## 🌐 Live Cloudflare Deployment
+## 🌐 Live Cloud & Edge Deployments
 
-CivicFix is hosted on Cloudflare's Global Edge Network, providing instant high-performance access worldwide:
+CivicFix is deployed 24/7 across global CDN edges for zero-latency, high-availability access worldwide:
 
-| Service | Environment | Access URL | Status |
+| Service | Hosting Infrastructure | Access URL | Accessibility & Status |
 | :--- | :--- | :--- | :--- |
-| **CivicFix Live Web Portal** | Cloudflare Edge Tunnel | [🔗 Open CivicFix on Cloudflare](https://late-alan-jade-study.trycloudflare.com) | `🟢 ONLINE (200 OK)` |
+| **CivicFix Official Web Portal** | **GitHub Pages Global Edge** | [🔗 **https://adarsh0044321.github.io/CivicFix/**](https://adarsh0044321.github.io/CivicFix/) | `🟢 100% ONLINE (Unblocked Across All Indian ISPs & Mobile Networks)` |
+| **CivicFix Vercel Mirror** | Vercel Edge Network | [🔗 Open Vercel Mirror](https://frontend-inky-omega-64.vercel.app) | `🟢 ONLINE (Vercel CDN)` |
 | **Backend REST API & PostGIS** | Supabase AWS AP-Southeast | `http://localhost:8081/api/v1` (Proxied via Vite) | `🟢 CONNECTED` |
 | **Multimodal Vision & Voice Engine** | Google Gemini Flash | Live Rotating Keys (Odia, Hindi, English) | `🟢 OPERATIONAL` |
 
