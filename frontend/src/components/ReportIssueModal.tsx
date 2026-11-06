@@ -139,6 +139,9 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
   const [detectedHazards, setDetectedHazards] = useState<string[]>([]);
   const [transcribedSpeech, setTranscribedSpeech] = useState<{ orig: string; lang: string } | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
+  const timerRef = useRef<any>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -325,13 +328,21 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
       };
 
       mediaRecorder.onstop = async () => {
+        if (timerRef.current) clearInterval(timerRef.current);
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setRecordedAudioUrl(audioUrl);
         await handleVoiceTranscribeBlob(audioBlob, 'odia');
         stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+      setRecordingSeconds(0);
+      setRecordedAudioUrl(null);
+      timerRef.current = setInterval(() => {
+        setRecordingSeconds((prev) => prev + 1);
+      }, 1000);
     } catch (err) {
       // If mic denied or not available, use sample Odia voice triage
       alert('Microphone not available or permission denied. Loading high-fidelity Odia voice simulation.');
@@ -340,6 +351,7 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
   };
 
   const stopRecording = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
@@ -566,20 +578,58 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
             </div>
           </div>
 
+          {/* Active Live Recording Status with Timer */}
+          {isRecording && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid #ef4444', borderRadius: '6px', padding: '8px 12px', marginTop: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', animation: 'pulse 1s infinite' }} />
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#ef4444' }}>
+                  Recording Live Voice: 0:{recordingSeconds < 10 ? `0${recordingSeconds}` : recordingSeconds}
+                </span>
+              </div>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                Speak grievance clearly • Tap Stop Recording when done
+              </span>
+            </div>
+          )}
+
+          {/* Captured Audio Playback Player Bar */}
+          {recordedAudioUrl && !isRecording && (
+            <div style={{ background: 'var(--bg-card)', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #0d9488', marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#0d9488', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Volume2 size={14} color="#0d9488" />
+                  🎧 Your Recorded Grievance Audio (Click Play to Review)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => { setRecordedAudioUrl(null); setTranscribedSpeech(null); }}
+                  style={{ fontSize: '11px', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}
+                >
+                  Discard & Re-record
+                </button>
+              </div>
+              <audio controls src={recordedAudioUrl} style={{ width: '100%', height: '32px' }} />
+            </div>
+          )}
+
           {aiTranscribing && (
-            <div style={{ fontSize: '12px', color: '#0d9488', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Loader2 size={13} className="spin" />
-              <span>Transcribing regional voice note and translating to English via Gemini...</span>
+            <div style={{ fontSize: '12px', color: '#0d9488', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(13, 148, 136, 0.08)', padding: '8px 12px', borderRadius: '6px' }}>
+              <Loader2 size={14} className="spin" />
+              <span>Transcribing regional voice note and translating to English via Gemini 3.5 Flash...</span>
             </div>
           )}
 
           {transcribedSpeech && (
-            <div style={{ fontSize: '12px', background: 'var(--bg-card)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontWeight: 600, color: '#0d9488', marginBottom: '2px' }}>
-                🗣️ Spoken in {transcribedSpeech.lang}:
+            <div style={{ fontSize: '12px', background: 'rgba(13, 148, 136, 0.08)', padding: '10px 12px', borderRadius: '6px', border: '1px solid #0d9488' }}>
+              <div style={{ fontWeight: 700, color: '#0d9488', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>✅ Voice Triage Extracted ({transcribedSpeech.lang})</span>
               </div>
-              <div style={{ fontStyle: 'italic', color: 'var(--text-secondary)' }}>
+              <div style={{ fontStyle: 'italic', color: 'var(--text-primary)', marginBottom: '4px' }}>
                 "{transcribedSpeech.orig}"
+              </div>
+              <div style={{ fontSize: '11px', color: '#0d9488' }}>
+                Auto-populated Title, Category, and Description below.
               </div>
             </div>
           )}

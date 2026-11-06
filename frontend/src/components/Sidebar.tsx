@@ -9,7 +9,6 @@ import {
   LogOut,
   Hammer,
   FileSpreadsheet,
-  Shield,
 } from 'lucide-react';
 import type { UserRole } from '../types';
 
@@ -28,7 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onTabChange,
   onOpenReportModal,
   currentRole,
-  onSwitchRole,
+  onSwitchRole: _onSwitchRole,
   onOpenAuthModal,
   onLogout,
 }) => {
@@ -159,25 +158,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <UserIcon size={18} />
           <span>Profile</span>
         </button>
-
-        {/* Quick Portal Switch Link if Resident */}
-        {currentRole === 'CITIZEN' && (
-          <button
-            className="nav-item"
-            onClick={() => onSwitchRole('ADMIN')}
-            style={{
-              marginTop: '12px',
-              background: 'rgba(239, 68, 68, 0.08)',
-              color: '#ef4444',
-              border: '1px dashed rgba(239, 68, 68, 0.4)',
-              borderRadius: '8px',
-            }}
-            title="Switch directly to Municipal Administrator Command Center"
-          >
-            <Shield size={18} color="#ef4444" />
-            <span style={{ fontWeight: 700 }}>Admin Portal</span>
-          </button>
-        )}
       </nav>
 
       {/* Clean Sidebar Footer matching Reference Image 2 */}

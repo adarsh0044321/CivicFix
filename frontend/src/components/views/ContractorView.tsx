@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Hammer, CheckCircle2, Star, MapPin, Clock, ArrowRight, ShieldAlert, Upload, Play, X, Loader2, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Hammer, CheckCircle2, Star, MapPin, Clock, ArrowRight, ShieldAlert, Upload, Play, X, Loader2, Camera } from 'lucide-react';
 import type { Complaint, ComplaintStatus } from '../../types';
 
 interface ContractorViewProps {
@@ -24,6 +24,8 @@ export const ContractorView: React.FC<ContractorViewProps> = ({
   const [activeTab, setActiveTab] = useState('All Tenders');
   const [modalItem, setModalItem] = useState<Complaint | null>(null);
   const [proofUrl, setProofUrl] = useState('');
+  const [selectedFileName, setSelectedFileName] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [workNotes, setWorkNotes] = useState('Excavated damaged area, applied hot-mix asphalt base and compacted to municipal grade.');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -76,28 +78,42 @@ export const ContractorView: React.FC<ContractorViewProps> = ({
     switch (category) {
       case 'ROAD_DAMAGE':
         return [
-          { label: 'Fresh Bitumen Pavement', url: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=600&auto=format&fit=crop&q=80' },
-          { label: 'Compacted Asphalt Patch', url: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?w=600&auto=format&fit=crop&q=80' },
+          { label: 'Fresh Bitumen Pavement', url: '/dummyimages/pothole_road_damage.jpg' },
+          { label: 'High-Grade Concrete Patch', url: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=600&auto=format&fit=crop&q=80' },
         ];
       case 'WATER_SUPPLY':
         return [
+          { label: 'New Municipal Pipe Segment', url: '/dummyimages/burst_water_pipe.jpg' },
           { label: 'Sealed High-Pressure Valve', url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80' },
-          { label: 'New Municipal Pipe Segment', url: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=600&auto=format&fit=crop&q=80' },
         ];
       case 'STREETLIGHT':
         return [
-          { label: 'Restored LED Luminaire', url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80' },
+          { label: 'Restored LED Luminaire', url: '/dummyimages/streetlight_luminaire.jpg' },
           { label: 'Illuminated Junction', url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80' },
         ];
       case 'DRAINAGE':
         return [
-          { label: 'De-silted Concrete Culvert', url: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=600&auto=format&fit=crop&q=80' },
-          { label: 'Unclogged Storm Drain', url: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=600&auto=format&fit=crop&q=80' },
+          { label: 'De-silted Concrete Culvert', url: '/dummyimages/drainage_waterlogging.jpg' },
+          { label: 'Unclogged Storm Drain', url: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=600&auto=format&fit=crop&q=80' },
         ];
       default:
         return [
-          { label: 'Cleaned & Sanitized Site', url: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&auto=format&fit=crop&q=80' },
+          { label: 'Cleaned & Sanitized Site', url: '/dummyimages/garbage_overflow.jpg' },
+          { label: 'Waste Cleared Container', url: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&auto=format&fit=crop&q=80' },
         ];
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setProofUrl(dataUrl);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -469,14 +485,70 @@ export const ContractorView: React.FC<ContractorViewProps> = ({
 
             <form onSubmit={handleSubmitProof} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                  Select Field Completion Photo (Proof of Quality)
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                  Upload Field Repair Completion Photo (Proof of Quality) *
                 </label>
+
+                {/* Real Native File Upload Input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  style={{ display: 'none' }}
+                />
+
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    border: '2px dashed #0d9488',
+                    borderRadius: '10px',
+                    padding: '20px 16px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    background: 'rgba(13, 148, 136, 0.05)',
+                    marginBottom: '12px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Camera size={32} color="#0d9488" style={{ margin: '0 auto 8px' }} />
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {selectedFileName ? `Selected: ${selectedFileName}` : 'Click to Upload Repair Proof Photo'}
+                  </div>
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '4px 0 0' }}>
+                    Browse files from your computer or capture directly from camera
+                  </p>
+                </div>
+
+                {/* Live Photo Preview */}
+                {proofUrl && (
+                  <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1.5px solid #0d9488', marginBottom: '12px', maxHeight: '180px' }}>
+                    <img src={proofUrl} alt="Repair Evidence" style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.7)', color: '#fff', padding: '6px 12px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 600 }}>✓ Proof photo attached</span>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                        style={{ background: '#0d9488', border: 'none', color: '#fff', borderRadius: '4px', padding: '3px 8px', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        Change Photo
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick Testing Scenario Options */}
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>
+                  Or select a quick test repair scenario:
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
                   {getPresetProofPhotos(modalItem.category).map((preset) => (
                     <div
                       key={preset.url}
-                      onClick={() => setProofUrl(preset.url)}
+                      onClick={() => {
+                        setProofUrl(preset.url);
+                        setSelectedFileName(preset.label);
+                      }}
                       style={{
                         border: proofUrl === preset.url ? '2px solid #0d9488' : '1px solid var(--border-color)',
                         borderRadius: '8px',
@@ -486,33 +558,14 @@ export const ContractorView: React.FC<ContractorViewProps> = ({
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      <div style={{ height: '90px', overflow: 'hidden' }}>
+                      <div style={{ height: '70px', overflow: 'hidden' }}>
                         <img src={preset.url} alt={preset.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
-                      <div style={{ padding: '6px', fontSize: '11px', fontWeight: 600, color: proofUrl === preset.url ? '#0d9488' : 'var(--text-primary)', textAlign: 'center' }}>
+                      <div style={{ padding: '4px 6px', fontSize: '11px', fontWeight: 600, color: proofUrl === preset.url ? '#0d9488' : 'var(--text-primary)', textAlign: 'center' }}>
                         {preset.label}
                       </div>
                     </div>
                   ))}
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <ImageIcon size={14} color="var(--text-muted)" />
-                  <input
-                    type="url"
-                    value={proofUrl}
-                    onChange={(e) => setProofUrl(e.target.value)}
-                    placeholder="Or paste resolution photo URL..."
-                    style={{
-                      flex: 1,
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-card)',
-                      color: 'var(--text-primary)',
-                      fontSize: '12px',
-                    }}
-                  />
                 </div>
               </div>
 

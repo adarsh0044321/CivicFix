@@ -2,7 +2,7 @@ import React from 'react';
 import { StatCards } from '../StatCards';
 import { ComplaintCard } from '../ComplaintCard';
 import type { Complaint } from '../../types';
-import { UserCheck, AlertCircle, Clock, Loader2 } from 'lucide-react';
+import { UserCheck, AlertCircle, Clock, Loader2, CheckCircle2, Hammer } from 'lucide-react';
 
 interface CitizenDashboardViewProps {
   userName: string;
@@ -100,47 +100,76 @@ export const CitizenDashboardView: React.FC<CitizenDashboardViewProps> = ({
         </section>
       )}
 
-      {/* Bottom Section matching Screenshot 1: Issue Activity & Upcoming Deadlines */}
+      {/* Bottom Section: Real Dynamic Issue Activity & Upcoming Deadlines */}
       <div className="bottom-dashboard-grid">
         {/* Card 1: Issue Activity */}
         <div className="dashboard-card">
           <div className="dashboard-card-header">
             <h3 className="dashboard-card-title">Issue Activity</h3>
-            <p className="dashboard-card-subtitle">Recent updates on issues you're following</p>
+            <p className="dashboard-card-subtitle">Real-time status updates on municipal grievances</p>
           </div>
           <div className="activity-list">
-            <div className="activity-item">
-              <div className="activity-avatar" style={{ background: '#e0f2fe', color: '#0284c7' }}>
-                <UserCheck size={18} />
+            {complaints.slice(0, 3).length === 0 ? (
+              <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                No recent activity recorded yet.
               </div>
-              <div className="activity-details">
-                <div className="activity-title">Contractor assigned</div>
-                <div className="activity-issue">Issue: Pothole Damage • Ward 12 Main Road</div>
-              </div>
-              <div className="activity-time">2 hours ago</div>
-            </div>
+            ) : (
+              complaints.slice(0, 3).map((c) => {
+                let icon = <Clock size={16} />;
+                let bg = '#e0f2fe';
+                let color = '#0284c7';
+                let actionText = 'Under Review';
 
-            <div className="activity-item">
-              <div className="activity-avatar" style={{ background: '#dcfce7', color: '#16a34a' }}>
-                <Clock size={18} />
-              </div>
-              <div className="activity-details">
-                <div className="activity-title">Inspection Scheduled</div>
-                <div className="activity-issue">Issue: Overflowing Waste Bin • Station Square</div>
-              </div>
-              <div className="activity-time">5 hours ago</div>
-            </div>
+                if (c.status === 'VERIFIED_RESOLVED') {
+                  icon = <CheckCircle2 size={16} />;
+                  bg = '#dcfce7';
+                  color = '#16a34a';
+                  actionText = 'Citizen Verified & Resolved';
+                } else if (c.status === 'AWAITING_VERIFICATION') {
+                  icon = <CheckCircle2 size={16} />;
+                  bg = 'rgba(13, 148, 136, 0.15)';
+                  color = '#0d9488';
+                  actionText = 'Repairs Complete • Verification Ready';
+                } else if (c.status === 'IN_PROGRESS') {
+                  icon = <Hammer size={16} />;
+                  bg = '#fef3c7';
+                  color = '#d97706';
+                  actionText = 'Contractor In-Progress Field Repair';
+                } else if (c.status === 'ASSIGNED') {
+                  icon = <UserCheck size={16} />;
+                  bg = '#e0f2fe';
+                  color = '#0284c7';
+                  actionText = `Dispatched to ${c.assignedWorkerName || 'Contractor'}`;
+                } else {
+                  icon = <AlertCircle size={16} />;
+                  bg = 'rgba(239, 68, 68, 0.1)';
+                  color = '#ef4444';
+                  actionText = 'Lodged & Auto-Triaged';
+                }
 
-            <div className="activity-item">
-              <div className="activity-avatar" style={{ background: '#fef3c7', color: '#d97706' }}>
-                <AlertCircle size={18} />
-              </div>
-              <div className="activity-details">
-                <div className="activity-title">Priority Escalated</div>
-                <div className="activity-issue">Issue: Open Storm Drain Hazard • School Zone</div>
-              </div>
-              <div className="activity-time">Yesterday</div>
-            </div>
+                return (
+                  <div
+                    key={c.id}
+                    className="activity-item"
+                    onClick={() => onViewDetails(c)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="activity-avatar" style={{ background: bg, color: color }}>
+                      {icon}
+                    </div>
+                    <div className="activity-details">
+                      <div className="activity-title">{actionText}</div>
+                      <div className="activity-issue">
+                        {c.complaintId}: {c.title} • {c.ward || 'Ward 26'}
+                      </div>
+                    </div>
+                    <div className="activity-time">
+                      {c.status === 'VERIFIED_RESOLVED' ? 'Resolved' : 'Active'}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -148,32 +177,64 @@ export const CitizenDashboardView: React.FC<CitizenDashboardViewProps> = ({
         <div className="dashboard-card">
           <div className="dashboard-card-header">
             <h3 className="dashboard-card-title">Upcoming Deadlines</h3>
-            <p className="dashboard-card-subtitle">Issues requiring your attention</p>
+            <p className="dashboard-card-subtitle">Grievance resolutions & verification deadlines</p>
           </div>
           <div className="deadlines-list">
-            <div className="deadline-item-card">
-              <div className="deadline-top">
-                <span className="deadline-name">Bid submission & Dispatch</span>
-                <span className="deadline-badge urgent">Urgent</span>
+            {complaints.filter(c => c.status !== 'VERIFIED_RESOLVED').slice(0, 2).length === 0 ? (
+              <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                All civic grievances are on track within their target resolution SLAs.
               </div>
-              <div className="deadline-issue">Issue: Fallen Tree Blocking Avenue 4</div>
-              <div className="deadline-time">
-                <Clock size={14} />
-                <span>Today, 5:00 PM (SLA Deadline)</span>
-              </div>
-            </div>
+            ) : (
+              [...complaints.filter(c => c.status === 'AWAITING_VERIFICATION'), ...complaints.filter(c => c.status !== 'VERIFIED_RESOLVED' && c.status !== 'AWAITING_VERIFICATION')].slice(0, 2).map((c) => {
+                const isAwaitingVerification = c.status === 'AWAITING_VERIFICATION';
+                const isOverdue = c.overdue || c.isOverdue;
 
-            <div className="deadline-item-card">
-              <div className="deadline-top">
-                <span className="deadline-name">Verification Sign-off</span>
-                <span className="deadline-badge normal">Pending</span>
-              </div>
-              <div className="deadline-issue">Issue: Streetlight LED Replacement</div>
-              <div className="deadline-time">
-                <Clock size={14} />
-                <span>Tomorrow, 12:00 PM</span>
-              </div>
-            </div>
+                return (
+                  <div
+                    key={c.id}
+                    className="deadline-item-card"
+                    onClick={() => onViewDetails(c)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="deadline-top">
+                      <span className="deadline-name">
+                        {isAwaitingVerification
+                          ? 'Verification & Rating Sign-off'
+                          : `Target SLA Redressal (${c.slaHours || 72}h)`}
+                      </span>
+                      <span
+                        className={`deadline-badge ${
+                          isAwaitingVerification
+                            ? 'urgent'
+                            : isOverdue
+                            ? 'urgent'
+                            : 'normal'
+                        }`}
+                        style={{
+                          background: isAwaitingVerification ? 'rgba(13, 148, 136, 0.15)' : undefined,
+                          color: isAwaitingVerification ? '#0d9488' : undefined,
+                        }}
+                      >
+                        {isAwaitingVerification ? 'Action Required' : isOverdue ? 'Overdue' : 'On Track'}
+                      </span>
+                    </div>
+                    <div className="deadline-issue">
+                      {c.complaintId}: {c.title} • {c.ward || 'Bhubaneswar'}
+                    </div>
+                    <div className="deadline-time">
+                      <Clock size={14} />
+                      <span>
+                        {isAwaitingVerification
+                          ? 'Repair finished. Please inspect and approve.'
+                          : c.slaDeadline
+                          ? `Deadline: ${new Date(c.slaDeadline).toLocaleDateString()} ${new Date(c.slaDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                          : 'Standard 72h municipal turnaround'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
