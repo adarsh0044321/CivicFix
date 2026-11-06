@@ -29,8 +29,22 @@ export const CitizenDashboardView: React.FC<CitizenDashboardViewProps> = ({
   onOpenReportModal,
   upvotedIds,
 }) => {
-  // Filter complaints based on the active tab
+  const [selectedStatCard, setSelectedStatCard] = React.useState<string>('ALL');
+
+  // Filter complaints based on the active tab and clicked stat card
   const filteredList = complaints.filter((c) => {
+    // Stat card filter
+    if (selectedStatCard === 'IN_PROGRESS' && !(c.status === 'IN_PROGRESS' || c.status === 'ASSIGNED')) {
+      return false;
+    }
+    if (selectedStatCard === 'PENDING' && !(c.status === 'SUBMITTED' || c.status === 'AWAITING_VERIFICATION')) {
+      return false;
+    }
+    if (selectedStatCard === 'COMPLETED' && !(c.status === 'VERIFIED_RESOLVED' || c.status === 'WORK_COMPLETED')) {
+      return false;
+    }
+
+    // Pill tab filter
     if (activeFilterTab === 'Urgent') {
       return c.urgency === 'HIGH' || c.priorityScore >= 11;
     }
@@ -51,8 +65,12 @@ export const CitizenDashboardView: React.FC<CitizenDashboardViewProps> = ({
         <p className="page-subtitle">Welcome back, {userName}</p>
       </div>
 
-      {/* 4 Stat Cards */}
-      <StatCards complaints={complaints} />
+      {/* 4 Responsive Interactive Stat Cards */}
+      <StatCards
+        complaints={complaints}
+        activeStat={selectedStatCard}
+        onSelectStat={setSelectedStatCard}
+      />
 
       {/* Filter Tabs matching Screenshot 1: Recent Issues | Urgent | Nearby | Following | Messages */}
       <div className="pill-tabs-bar">

@@ -21,6 +21,7 @@ export const AdminCommandView: React.FC<AdminCommandViewProps> = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [showDuplicatesOnly, setShowDuplicatesOnly] = useState<boolean>(false);
+  const [statFilter, setStatFilter] = useState<'ALL' | 'CRITICAL' | 'OVERDUE' | 'DUPLICATES'>('ALL');
 
   // Group complaints by duplicate cluster ID
   const duplicateClusters = complaints.reduce<Record<string, Complaint[]>>((acc, c) => {
@@ -35,8 +36,18 @@ export const AdminCommandView: React.FC<AdminCommandViewProps> = ({
   const filteredComplaints = complaints.filter((c) => {
     if (selectedCategory !== 'ALL' && c.category !== selectedCategory) return false;
     if (showDuplicatesOnly && !(c.isDuplicate || c.duplicate || c.duplicateGroupId)) return false;
+
+    // Responsive Stat Cards Filter (Request 10)
+    if (statFilter === 'CRITICAL' && c.priorityScore < 11 && c.urgency !== 'HIGH') return false;
+    if (statFilter === 'OVERDUE' && !(c.isOverdue || c.urgency === 'HIGH')) return false;
+    if (statFilter === 'DUPLICATES' && !(c.isDuplicate || c.duplicate || c.duplicateGroupId)) return false;
+
     return true;
   });
+
+  const handleStatCardClick = (target: 'ALL' | 'CRITICAL' | 'OVERDUE' | 'DUPLICATES') => {
+    setStatFilter((prev) => (prev === target ? 'ALL' : target));
+  };
 
   return (
     <div className="view-container">
@@ -67,9 +78,19 @@ export const AdminCommandView: React.FC<AdminCommandViewProps> = ({
         </div>
       </div>
 
-      {/* Admin KPI Ribbon */}
+      {/* Admin KPI Ribbon - Interactive & Responsive Stat Filters */}
       <section className="stats-grid">
-        <div className="stat-card">
+        <div
+          className="stat-card"
+          onClick={() => handleStatCardClick('ALL')}
+          style={{
+            cursor: 'pointer',
+            border: statFilter === 'ALL' ? '2px solid #0d9488' : '1px solid var(--border-color)',
+            background: statFilter === 'ALL' ? 'rgba(13, 148, 136, 0.05)' : 'var(--bg-card)',
+            transition: 'all 0.18s ease',
+          }}
+          title="Click to show all active municipal complaints"
+        >
           <div className="stat-card-top">
             <span className="stat-label">Active City Queue</span>
             <span className="trend-badge positive">All 5 Categories</span>
@@ -78,18 +99,40 @@ export const AdminCommandView: React.FC<AdminCommandViewProps> = ({
           <span className="stat-subtext">Live complaints in Supabase</span>
         </div>
 
-        <div className="stat-card">
+        <div
+          className="stat-card"
+          onClick={() => handleStatCardClick('CRITICAL')}
+          style={{
+            cursor: 'pointer',
+            border: statFilter === 'CRITICAL' ? '2px solid #ef4444' : '1px solid var(--border-color)',
+            background: statFilter === 'CRITICAL' ? 'rgba(239, 68, 68, 0.06)' : 'var(--bg-card)',
+            transition: 'all 0.18s ease',
+          }}
+          title="Click to filter by Critical / High Priority tickets only"
+        >
           <div className="stat-card-top">
             <span className="stat-label">Critical / High Priority</span>
             <span className="trend-badge negative">Score &ge; 11/15</span>
           </div>
           <span className="stat-number" style={{ color: '#ef4444' }}>
-            {complaints.filter((c) => c.priorityScore >= 11).length}
+            {complaints.filter((c) => c.priorityScore >= 11 || c.urgency === 'HIGH').length}
           </span>
-          <span className="stat-subtext">Requires immediate dispatch</span>
+          <span className="stat-subtext">
+            {statFilter === 'CRITICAL' ? '✓ Filter Applied: Critical Only' : 'Click to filter table'}
+          </span>
         </div>
 
-        <div className="stat-card">
+        <div
+          className="stat-card"
+          onClick={() => handleStatCardClick('OVERDUE')}
+          style={{
+            cursor: 'pointer',
+            border: statFilter === 'OVERDUE' ? '2px solid #f59e0b' : '1px solid var(--border-color)',
+            background: statFilter === 'OVERDUE' ? 'rgba(245, 158, 11, 0.06)' : 'var(--bg-card)',
+            transition: 'all 0.18s ease',
+          }}
+          title="Click to filter by SLA Overdue or Approaching tickets"
+        >
           <div className="stat-card-top">
             <span className="stat-label">SLA Approaching / Overdue</span>
             <span className="trend-badge" style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#ca8a04' }}>
@@ -99,18 +142,47 @@ export const AdminCommandView: React.FC<AdminCommandViewProps> = ({
           <span className="stat-number" style={{ color: '#f59e0b' }}>
             {complaints.filter((c) => c.isOverdue || c.urgency === 'HIGH').length}
           </span>
-          <span className="stat-subtext">Auto-escalation active</span>
+          <span className="stat-subtext">
+            {statFilter === 'OVERDUE' ? '✓ Filter Applied: Overdue Only' : 'Auto-escalation active'}
+          </span>
         </div>
 
-        <div className="stat-card">
+        <div
+          className="stat-card"
+          onClick={() => handleStatCardClick('DUPLICATES')}
+          style={{
+            cursor: 'pointer',
+            border: statFilter === 'DUPLICATES' ? '2px solid #0d9488' : '1px solid var(--border-color)',
+            background: statFilter === 'DUPLICATES' ? 'rgba(13, 148, 136, 0.06)' : 'var(--bg-card)',
+            transition: 'all 0.18s ease',
+          }}
+          title="Click to filter duplicate candidate clusters"
+        >
           <div className="stat-card-top">
             <span className="stat-label">Duplicate Clusters</span>
             <span className="trend-badge positive">Auto-deduplicated</span>
           </div>
           <span className="stat-number">{Object.keys(duplicateClusters).length}</span>
-          <span className="stat-subtext">Multi-citizen grouped reports</span>
+          <span className="stat-subtext">
+            {statFilter === 'DUPLICATES' ? '✓ Filter Applied: Duplicates' : 'Multi-citizen grouped reports'}
+          </span>
         </div>
       </section>
+
+      {/* Active Stat Filter Banner */}
+      {statFilter !== 'ALL' && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(13, 148, 136, 0.08)', border: '1px solid #0d9488', borderRadius: '8px', padding: '8px 16px', marginBottom: '16px' }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            ⚡ Filter Active: Showing <strong>{statFilter === 'CRITICAL' ? 'Critical / High Priority (Score ≥ 11)' : statFilter === 'OVERDUE' ? 'SLA Approaching / Overdue' : 'Duplicate Clusters'}</strong> only ({filteredComplaints.length} records)
+          </span>
+          <button
+            onClick={() => setStatFilter('ALL')}
+            style={{ background: 'transparent', border: 'none', color: '#0d9488', fontSize: '12px', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            Clear Filter (Show All)
+          </button>
+        </div>
+      )}
 
       {/* Controls Bar: Category Filter & Status Filter */}
       <div className="admin-controls-bar">

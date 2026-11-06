@@ -8,6 +8,7 @@ import { ContractorView } from './components/views/ContractorView';
 import { AnalyticsView } from './components/views/AnalyticsView';
 import { ProfileView } from './components/views/ProfileView';
 import { AdminCommandView } from './components/views/AdminCommandView';
+import { AdminContractorsView } from './components/views/AdminContractorsView';
 import { CivicHeatmapView } from './components/views/CivicHeatmapView';
 import { LoginPage } from './components/views/LoginPage';
 import { ComplaintDetailModal } from './components/ComplaintDetailModal';
@@ -326,7 +327,14 @@ export default function App() {
             />
           )}
 
-          {((currentTab === 'contractors' && currentRole === 'ADMIN') || (currentRole === 'WORKER' && (currentTab === 'dashboard' || currentTab === 'reports' || currentTab === 'contractors'))) && (
+          {currentTab === 'contractors' && currentRole === 'ADMIN' && (
+            <AdminContractorsView
+              complaints={searchFilteredComplaints}
+              onViewDetails={setSelectedComplaint}
+            />
+          )}
+
+          {currentRole === 'WORKER' && (currentTab === 'dashboard' || currentTab === 'reports' || currentTab === 'contractors') && (
             <ContractorView
               complaints={searchFilteredComplaints}
               userName={userName}

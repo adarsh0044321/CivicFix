@@ -17,6 +17,7 @@ import {
   Play,
   Hammer,
   Upload,
+  Camera,
   ShieldAlert,
 } from 'lucide-react';
 import type { Complaint, UserRole, PriorityBreakdown, ComplaintStatus } from '../types';
@@ -36,6 +37,26 @@ interface ComplaintDetailModalProps {
   ) => Promise<any>;
 }
 
+const getCategoryRepairSvg = (cat: string) => {
+  switch (cat) {
+    case 'ROAD_DAMAGE': return '/dummyimages/road_repair_completed.svg';
+    case 'WATER_SUPPLY': return '/dummyimages/water_pipe_repair_completed.svg';
+    case 'STREETLIGHT': return '/dummyimages/streetlight_repair_completed.svg';
+    case 'DRAINAGE': return '/dummyimages/drain_repair_completed.svg';
+    default: return '/dummyimages/waste_cleanup_completed.svg';
+  }
+};
+
+const getCategoryBeforeFallback = (cat: string) => {
+  switch (cat) {
+    case 'ROAD_DAMAGE': return '/dummyimages/pothole_road_damage.jpg';
+    case 'WATER_SUPPLY': return '/dummyimages/burst_water_pipe.jpg';
+    case 'STREETLIGHT': return '/dummyimages/streetlight_luminaire.jpg';
+    case 'DRAINAGE': return '/dummyimages/drainage_waterlogging.jpg';
+    default: return '/dummyimages/garbage_overflow.jpg';
+  }
+};
+
 export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
   complaint,
   onClose,
@@ -54,6 +75,12 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
   const [selectedContractor, setSelectedContractor] = useState('ABC Construction Ltd (Road Maintenance)');
   const [dispatchNotes, setDispatchNotes] = useState('');
 
+  // Contractor Field Resolution Proof Upload States (Phase 11 & 13)
+  const detailFileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [contractorProofUrl, setContractorProofUrl] = useState<string>('');
+  const [contractorProofName, setContractorProofName] = useState<string>('');
+  const [contractorNotes, setContractorNotes] = useState<string>('');
+
   // Rating State
   const [userRating, setUserRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number>(0);
@@ -67,6 +94,12 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
     setIsReopening(false);
     setDisputeInput('');
     if (complaint) {
+      setContractorProofUrl(complaint.resolutionImageUrl || getCategoryRepairSvg(complaint.category));
+      setContractorProofName('');
+      setContractorNotes(
+        complaint.resolutionNotes ||
+        `Field repair completed by ABC Construction Ltd for ${complaint.category.replace('_', ' ')}. Replaced components and verified stability.`
+      );
       try {
         const stored = localStorage.getItem(`civicfix_rating_${complaint.id}`);
         if (stored) {
@@ -83,6 +116,18 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
   }, [complaint]);
 
   const activeComplaint = currentComplaint || complaint;
+
+  const handleDetailFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setContractorProofName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setContractorProofUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleAdminAssign = async () => {
     if (!activeComplaint || !onTransitionStatus) return;
@@ -116,15 +161,9 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
     if (!activeComplaint || !onTransitionStatus) return;
     setActionLoading(true);
     try {
-      const notes = `Field repair completed by ABC Construction Ltd according to municipal grade specifications. Ready for citizen inspection.`;
-      const proofUrl = activeComplaint.category === 'ROAD_DAMAGE'
-        ? 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=600&auto=format&fit=crop&q=80'
-        : activeComplaint.category === 'WATER_SUPPLY'
-        ? 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80'
-        : activeComplaint.category === 'DRAINAGE'
-        ? 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=600&auto=format&fit=crop&q=80'
-        : 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80';
-      const updated = await onTransitionStatus(activeComplaint.id, 'AWAITING_VERIFICATION', notes, proofUrl);
+      const finalNotes = contractorNotes.trim() || `Field repair completed by ABC Construction Ltd according to municipal specifications.`;
+      const finalProofUrl = contractorProofUrl || getCategoryRepairSvg(activeComplaint.category);
+      const updated = await onTransitionStatus(activeComplaint.id, 'AWAITING_VERIFICATION', finalNotes, finalProofUrl);
       if (updated) setCurrentComplaint(updated);
     } catch (e) {
       console.warn('Resolution submission error:', e);
@@ -560,8 +599,11 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
                 </div>
                 <div style={{ height: '170px', overflow: 'hidden' }}>
                   <img
-                    src={activeComplaint.imageUrl || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80'}
+                    src={activeComplaint.imageUrl || getCategoryBeforeFallback(activeComplaint.category)}
                     alt="Before Repair"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = getCategoryBeforeFallback(activeComplaint.category);
+                    }}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 </div>
@@ -607,15 +649,11 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
                   </div>
                   <div style={{ height: '170px', overflow: 'hidden', position: 'relative' }}>
                     <img
-                      src={
-                        activeComplaint.resolutionImageUrl ||
-                        (activeComplaint.category === 'ROAD_DAMAGE'
-                          ? 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=600&auto=format&fit=crop&q=80'
-                          : activeComplaint.category === 'WATER_SUPPLY'
-                          ? 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80'
-                          : 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80')
-                      }
+                      src={activeComplaint.resolutionImageUrl || getCategoryRepairSvg(activeComplaint.category)}
                       alt="After Repair Proof"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = getCategoryRepairSvg(activeComplaint.category);
+                      }}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                     {activeComplaint.status === 'VERIFIED_RESOLVED' && (
@@ -788,12 +826,132 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
               <Upload size={18} color="#0d9488" />
               <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#0d9488', margin: 0 }}>
-                Field Repair In Progress: Submit Completion Proof
+                Field Repair In Progress: Upload Completion Proof Photo
               </h3>
             </div>
             <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 12px 0' }}>
-              Repair underway by ABC Construction Ltd. Once asphalt patching / plumbing / electrical fixes are complete, submit resolution proof photo to trigger Citizen & Municipal Verification.
+              Repair underway by ABC Construction Ltd. Select or capture your field resolution proof photo and provide work summary notes before requesting citizen verification.
             </p>
+
+            {/* Native File Upload Input */}
+            <input
+              ref={detailFileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleDetailFileSelect}
+              style={{ display: 'none' }}
+            />
+
+            <div
+              onClick={() => detailFileInputRef.current?.click()}
+              style={{
+                border: '2px dashed #0d9488',
+                borderRadius: '10px',
+                padding: '18px 16px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: 'rgba(13, 148, 136, 0.04)',
+                marginBottom: '12px',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Camera size={30} color="#0d9488" style={{ margin: '0 auto 6px' }} />
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                {contractorProofName ? `Selected: ${contractorProofName}` : 'Click to Upload Repair Proof Photo'}
+              </div>
+              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '3px 0 0' }}>
+                Browse photos from device or take photo with camera
+              </p>
+            </div>
+
+            {/* Live Photo Preview */}
+            {contractorProofUrl && (
+              <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1.5px solid #0d9488', marginBottom: '12px', maxHeight: '160px' }}>
+                <img
+                  src={contractorProofUrl}
+                  alt="Resolution Evidence Preview"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = getCategoryRepairSvg(activeComplaint.category);
+                  }}
+                  style={{ width: '100%', height: '160px', objectFit: 'cover' }}
+                />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.75)', color: '#fff', padding: '6px 12px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 600 }}>✓ Attached Field Proof Photo</span>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); detailFileInputRef.current?.click(); }}
+                    style={{ background: '#0d9488', border: 'none', color: '#fff', borderRadius: '4px', padding: '3px 8px', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Change Photo
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Quick Test Scenarios */}
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>
+              Or choose verified test resolution scenario:
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+              <div
+                onClick={() => setContractorProofUrl(getCategoryRepairSvg(activeComplaint.category))}
+                style={{
+                  border: contractorProofUrl === getCategoryRepairSvg(activeComplaint.category) ? '2px solid #0d9488' : '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  padding: '6px 8px',
+                  cursor: 'pointer',
+                  background: 'var(--bg-card)',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: contractorProofUrl === getCategoryRepairSvg(activeComplaint.category) ? '#0d9488' : 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>🛠️ Fresh Completed Fix (SVG Proof)</span>
+              </div>
+              <div
+                onClick={() => setContractorProofUrl(getCategoryBeforeFallback(activeComplaint.category))}
+                style={{
+                  border: contractorProofUrl === getCategoryBeforeFallback(activeComplaint.category) ? '2px solid #0d9488' : '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  padding: '6px 8px',
+                  cursor: 'pointer',
+                  background: 'var(--bg-card)',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: contractorProofUrl === getCategoryBeforeFallback(activeComplaint.category) ? '#0d9488' : 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>📸 Repaired Site Photo</span>
+              </div>
+            </div>
+
+            {/* Work Notes */}
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                Contractor Field Work Summary Notes
+              </label>
+              <textarea
+                value={contractorNotes}
+                onChange={(e) => setContractorNotes(e.target.value)}
+                rows={2}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-primary)',
+                  fontSize: '12px',
+                }}
+              />
+            </div>
+
             <button
               type="button"
               disabled={actionLoading}
@@ -813,7 +971,7 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
               }}
             >
               {actionLoading ? <Loader2 size={14} className="spin" /> : <CheckCircle2 size={14} />}
-              <span>Submit Repair Proof & Request Verification</span>
+              <span>Submit Repair Proof &amp; Request Verification</span>
             </button>
           </div>
         )}

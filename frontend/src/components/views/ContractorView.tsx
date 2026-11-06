@@ -78,28 +78,28 @@ export const ContractorView: React.FC<ContractorViewProps> = ({
     switch (category) {
       case 'ROAD_DAMAGE':
         return [
-          { label: 'Fresh Bitumen Pavement', url: '/dummyimages/pothole_road_damage.jpg' },
-          { label: 'High-Grade Concrete Patch', url: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=600&auto=format&fit=crop&q=80' },
+          { label: 'Fresh Bitumen Pavement', url: '/dummyimages/road_repair_completed.svg' },
+          { label: 'Compacted Asphalt Patch', url: '/dummyimages/pothole_road_damage.jpg' },
         ];
       case 'WATER_SUPPLY':
         return [
-          { label: 'New Municipal Pipe Segment', url: '/dummyimages/burst_water_pipe.jpg' },
-          { label: 'Sealed High-Pressure Valve', url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80' },
+          { label: 'Ductile Iron Pipe Segment', url: '/dummyimages/water_pipe_repair_completed.svg' },
+          { label: 'Sealed High-Pressure Valve', url: '/dummyimages/burst_water_pipe.jpg' },
         ];
       case 'STREETLIGHT':
         return [
-          { label: 'Restored LED Luminaire', url: '/dummyimages/streetlight_luminaire.jpg' },
-          { label: 'Illuminated Junction', url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80' },
+          { label: 'Restored 120W LED Luminaire', url: '/dummyimages/streetlight_repair_completed.svg' },
+          { label: 'Phase Conductor Replaced', url: '/dummyimages/streetlight_luminaire.jpg' },
         ];
       case 'DRAINAGE':
         return [
-          { label: 'De-silted Concrete Culvert', url: '/dummyimages/drainage_waterlogging.jpg' },
-          { label: 'Unclogged Storm Drain', url: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=600&auto=format&fit=crop&q=80' },
+          { label: 'De-silted Concrete Culvert', url: '/dummyimages/drain_repair_completed.svg' },
+          { label: 'Unclogged Storm Drain', url: '/dummyimages/drainage_waterlogging.jpg' },
         ];
       default:
         return [
-          { label: 'Cleaned & Sanitized Site', url: '/dummyimages/garbage_overflow.jpg' },
-          { label: 'Waste Cleared Container', url: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&auto=format&fit=crop&q=80' },
+          { label: 'Sanitized Municipal Bin', url: '/dummyimages/waste_cleanup_completed.svg' },
+          { label: 'Waste Cleared Container', url: '/dummyimages/garbage_overflow.jpg' },
         ];
     }
   };
@@ -129,7 +129,7 @@ export const ContractorView: React.FC<ContractorViewProps> = ({
   const handleOpenUploadModal = (item: Complaint) => {
     setModalItem(item);
     const presets = getPresetProofPhotos(item.category);
-    setProofUrl(presets[0]?.url || 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=600&auto=format&fit=crop&q=80');
+    setProofUrl(presets[0]?.url || '/dummyimages/road_repair_completed.svg');
     setWorkNotes(`Field repair executed for ${item.category.replace('_', ' ')}. Replaced components and verified stability.`);
   };
 

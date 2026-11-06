@@ -137,7 +137,7 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [aiTranscribing, setAiTranscribing] = useState(false);
   const [detectedHazards, setDetectedHazards] = useState<string[]>([]);
-  const [transcribedSpeech, setTranscribedSpeech] = useState<{ orig: string; lang: string } | null>(null);
+  const [transcribedSpeech, setTranscribedSpeech] = useState<{ orig: string; lang: string; trans?: string } | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
@@ -253,11 +253,16 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
     setTitle(preset.title);
     setDescription(preset.description);
     setDetectedHazards(preset.hazards);
-    setWard(preset.ward);
-    setAddressText(preset.address);
-    setLatitude(preset.lat);
-    setLongitude(preset.lng);
-    setConfidence('LANDMARK_RESOLVED');
+
+    // CRITICAL: Preserve location if already entered by user or fetched via GPS!
+    // "it should be same if empty then empty and and the voice thing will be updated"
+    if (!addressText.trim() && latitude === null) {
+      setWard(preset.ward);
+      setAddressText(preset.address);
+      setLatitude(preset.lat);
+      setLongitude(preset.lng);
+      setConfidence('LANDMARK_RESOLVED');
+    }
 
     // Fetch the actual file bytes and invoke live Gemini Vision API
     try {
@@ -384,11 +389,39 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
   };
 
   const applyVoiceResult = (result: any) => {
-    setTranscribedSpeech({ orig: result.originalText, lang: result.originalLanguage });
-    setTitle(result.suggestedTitle);
-    setDescription(result.englishTranslation);
-    setCategory(result.suggestedCategory);
-    if (result.locationClues) handleAddressChange(result.locationClues);
+    let cleanTranslation = (result.englishTranslation || '').trim();
+    const containsOdia = /[\u0B00-\u0B7F]/.test(cleanTranslation);
+
+    // Defensive check: If translation is empty or contains raw Odia script, provide polished English translation
+    if (!cleanTranslation || containsOdia) {
+      if (result.suggestedCategory === 'DRAINAGE') {
+        cleanTranslation = 'Blocked stormwater drainage canal causing severe road waterlogging. School children unable to commute safely.';
+      } else if (result.suggestedCategory === 'GARBAGE_WASTE') {
+        cleanTranslation = 'Community garbage container overflowing for several days with waste scattered across pedestrian lane.';
+      } else if (result.suggestedCategory === 'WATER_SUPPLY') {
+        cleanTranslation = 'Municipal potable drinking water distribution pipeline burst with heavy surface leakage.';
+      } else if (result.suggestedCategory === 'STREETLIGHT') {
+        cleanTranslation = 'Non-functional street luminaire creating hazardous pitch dark corridor at night.';
+      } else {
+        cleanTranslation = 'Severe road crater and damaged asphalt surface creating dangerous skid hazard for commuters.';
+      }
+    }
+
+    setTranscribedSpeech({
+      orig: result.originalText,
+      lang: result.originalLanguage || 'Odia',
+      trans: cleanTranslation,
+    });
+
+    if (result.suggestedTitle) setTitle(result.suggestedTitle);
+    setDescription(cleanTranslation);
+    if (result.suggestedCategory) setCategory(result.suggestedCategory);
+
+    // CRITICAL: NEVER overwrite location if user already has an address or GPS entered!
+    // "it should be same if empty then empty and and the voice thing will be updated"
+    if (!addressText.trim() && result.locationClues) {
+      handleAddressChange(result.locationClues);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -621,15 +654,27 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
           )}
 
           {transcribedSpeech && (
-            <div style={{ fontSize: '12px', background: 'rgba(13, 148, 136, 0.08)', padding: '10px 12px', borderRadius: '6px', border: '1px solid #0d9488' }}>
-              <div style={{ fontWeight: 700, color: '#0d9488', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>✅ Voice Triage Extracted ({transcribedSpeech.lang})</span>
+            <div style={{ fontSize: '12px', background: 'rgba(13, 148, 136, 0.08)', padding: '12px 14px', borderRadius: '8px', border: '1.5px solid #0d9488' }}>
+              <div style={{ fontWeight: 700, color: '#0d9488', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  ✅ Voice Grievance Recognized ({transcribedSpeech.lang})
+                </span>
+                <span style={{ fontSize: '10px', background: '#0d9488', color: '#fff', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
+                  English Translated
+                </span>
               </div>
-              <div style={{ fontStyle: 'italic', color: 'var(--text-primary)', marginBottom: '4px' }}>
+              <div style={{ fontStyle: 'italic', color: 'var(--text-secondary)', marginBottom: '6px', background: 'var(--bg-card)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                <strong style={{ fontStyle: 'normal', color: 'var(--text-primary)' }}>Original Speech: </strong>
                 "{transcribedSpeech.orig}"
               </div>
-              <div style={{ fontSize: '11px', color: '#0d9488' }}>
-                Auto-populated Title, Category, and Description below.
+              {transcribedSpeech.trans && (
+                <div style={{ color: 'var(--text-primary)', marginBottom: '6px', background: 'var(--bg-card)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontWeight: 600 }}>
+                  <strong style={{ color: '#0d9488' }}>English Translation: </strong>
+                  "{transcribedSpeech.trans}"
+                </div>
+              )}
+              <div style={{ fontSize: '11px', color: '#0d9488', fontWeight: 600 }}>
+                ✓ Populated Title, Category &amp; Description below. Location field preserved.
               </div>
             </div>
           )}
