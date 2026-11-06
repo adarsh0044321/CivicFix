@@ -7,7 +7,7 @@ CivicFix connects urban citizens, municipal administrators, field contractors, a
 > **REPORT → MULTIMODAL AI TRIAGE → GPS & HEATMAP ROUTING → CONTRACTOR DISPATCH → PROOF OF REPAIR → CITIZEN VERIFICATION & RATING**
 
 [![Release](https://img.shields.io/badge/Release-v1.0-success.svg)](https://github.com/adarsh0044321/CivicFix)
-[![Cloudflare](https://img.shields.io/badge/Hosted%20On-Cloudflare%20Edge-F38020.svg?logo=cloudflare)](https://late-alan-jade-study.trycloudflare.com)
+[![Hosted On](https://img.shields.io/badge/Hosted%20On-GitHub%20Pages%2024%2F7-181717.svg?logo=github)](https://adarsh0044321.github.io/CivicFix/)
 [![Java](https://img.shields.io/badge/Java-17%20LTS-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-green.svg)](https://spring.io/projects/spring-boot)
 [![Frontend](https://img.shields.io/badge/React-18%20%7C%20TypeScript-blue.svg)](https://react.dev/)
