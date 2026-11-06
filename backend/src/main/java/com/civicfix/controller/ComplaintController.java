@@ -52,6 +52,18 @@ public class ComplaintController {
     }
 
     /**
+     * GET /api/v1/complaints/scoped - RLS Role-Scoped Data Access
+     * Automatically filters records based on authenticated/queried role and user identity.
+     */
+    @GetMapping("/complaints/scoped")
+    public ResponseEntity<List<ComplaintResponseDto>> getScopedComplaints(
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String userIdentifier
+    ) {
+        return ResponseEntity.ok(complaintService.getScopedComplaints(role, userIdentifier));
+    }
+
+    /**
      * GET /api/v1/complaints/{id} - Retrieve complaint by UUID
      */
     @GetMapping("/complaints/{id}")

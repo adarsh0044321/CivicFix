@@ -128,6 +128,45 @@ public class ComplaintService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Row-Level Security (RLS) Scoped Retrieval:
+     * Enforces role-based data isolation so each actor type only accesses records they own or have authority over.
+     */
+    @Transactional(readOnly = true)
+    public List<ComplaintResponseDto> getScopedComplaints(String roleStr, String userIdentifier) {
+        List<Complaint> all = complaintRepository.findAllByOrderByCreatedAtDesc();
+        if (roleStr == null || roleStr.isBlank() || "ADMIN".equalsIgnoreCase(roleStr)) {
+            // Municipal Admin has full city-wide oversight
+            return all.stream().map(ComplaintResponseDto::fromEntity).collect(Collectors.toList());
+        }
+
+        if ("WORKER".equalsIgnoreCase(roleStr) || "CONTRACTOR".equalsIgnoreCase(roleStr)) {
+            // Contractors only access assigned work orders and available departmental tenders
+            return all.stream()
+                    .filter(c -> c.getStatus() == ComplaintStatus.ASSIGNED ||
+                                 c.getStatus() == ComplaintStatus.IN_PROGRESS ||
+                                 c.getStatus() == ComplaintStatus.AWAITING_VERIFICATION ||
+                                 (c.getAssignedWorker() != null && userIdentifier != null &&
+                                  (userIdentifier.equalsIgnoreCase(c.getAssignedWorker().getFullName()) ||
+                                   userIdentifier.equalsIgnoreCase(c.getAssignedWorker().getEmail()))))
+                    .map(ComplaintResponseDto::fromEntity)
+                    .collect(Collectors.toList());
+        }
+
+        // Citizens only access their own reported records
+        return all.stream()
+                .filter(c -> {
+                    if (userIdentifier == null || userIdentifier.isBlank()) return true;
+                    if (c.getReporter() != null) {
+                        return userIdentifier.equalsIgnoreCase(c.getReporter().getEmail()) ||
+                               userIdentifier.equalsIgnoreCase(c.getReporter().getFullName());
+                    }
+                    return true;
+                })
+                .map(ComplaintResponseDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
     public ComplaintResponseDto getComplaintById(UUID id) {
         Complaint complaint = complaintRepository.findById(id)
@@ -183,6 +222,23 @@ public class ComplaintService {
 
         ComplaintStatus prevStatus = complaint.getStatus();
         ComplaintStatus target = request.getTargetStatus();
+
+        // Row-Level Security & Role Ownership Enforcement
+        String actorRole = request.getActorRole();
+        if (actorRole != null && !actorRole.isBlank()) {
+            if ("WORKER".equalsIgnoreCase(actorRole) || "CONTRACTOR".equalsIgnoreCase(actorRole)) {
+                if (target == ComplaintStatus.VERIFIED_RESOLVED) {
+                    throw new IllegalArgumentException("Security Violation: Field Contractors cannot unilaterally mark issues as VERIFIED_RESOLVED. Citizen verification or Municipal Inspector sign-off is mandatory.");
+                }
+                if (target == ComplaintStatus.ASSIGNED) {
+                    throw new IllegalArgumentException("Security Violation: Contractors cannot dispatch or reassign tickets. Only Municipal Administrators possess dispatch authority.");
+                }
+            } else if ("CITIZEN".equalsIgnoreCase(actorRole)) {
+                if (target == ComplaintStatus.IN_PROGRESS || target == ComplaintStatus.AWAITING_VERIFICATION) {
+                    throw new IllegalArgumentException("Security Violation: Citizens cannot perform contractor repair phase transitions.");
+                }
+            }
+        }
 
         complaint.setStatus(target);
         complaint.setUpdatedAt(Instant.now());

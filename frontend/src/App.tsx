@@ -46,11 +46,38 @@ export default function App() {
     return localStorage.getItem('civicfix_user_email') || 'citizen@civicfix.gov.in';
   });
 
-  // Modals
+  // Modals & Security Gates
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isPublicTrackerOpen, setIsPublicTrackerOpen] = useState(false);
+  const [isAdminAuthBlocked, setIsAdminAuthBlocked] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+
+  // URL Route Protection & Admin URL Guard
+  useEffect(() => {
+    const checkAdminRoute = () => {
+      const path = (window.location.pathname || '').toLowerCase();
+      const hash = (window.location.hash || '').toLowerCase();
+
+      if (path.includes('/admin') || hash.includes('#admin')) {
+        if (!isAuthenticated || currentRole !== 'ADMIN') {
+          // Block unauthorized access to /admin
+          setIsAdminAuthBlocked(true);
+        } else {
+          setIsAdminAuthBlocked(false);
+          setCurrentTab('dashboard');
+        }
+      }
+    };
+
+    checkAdminRoute();
+    window.addEventListener('popstate', checkAdminRoute);
+    window.addEventListener('hashchange', checkAdminRoute);
+    return () => {
+      window.removeEventListener('popstate', checkAdminRoute);
+      window.removeEventListener('hashchange', checkAdminRoute);
+    };
+  }, [isAuthenticated, currentRole]);
 
   // Fetch real complaints from Spring Boot / Supabase API
   const fetchComplaints = async () => {
@@ -319,6 +346,7 @@ export default function App() {
           {currentTab === 'reports' && currentRole === 'CITIZEN' && (
             <MyReportsView
               complaints={searchFilteredComplaints}
+              userName={userName}
               onOpenReportModal={() => setIsReportModalOpen(true)}
               onViewDetails={setSelectedComplaint}
               onUpvote={handleUpvote}
@@ -378,6 +406,59 @@ export default function App() {
         isOpen={isPublicTrackerOpen}
         onClose={() => setIsPublicTrackerOpen(false)}
       />
+
+      {/* Admin Route Protection & Authentication Guard */}
+      {isAdminAuthBlocked && (
+        <div className="modal-overlay" style={{ zIndex: 9999 }}>
+          <div className="modal-content" style={{ maxWidth: '440px', textAlign: 'center', padding: '32px 24px' }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              fontSize: '26px'
+            }}>
+              🛡️
+            </div>
+            <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+              Admin Privileges Required
+            </h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '20px' }}>
+              The Municipal Operations Command Center (<code style={{ color: '#ef4444' }}>/admin</code>) is strictly restricted to verified Municipal Administrators. Your current session ({currentRole}) does not have administrative clearance.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                className="primary-teal-btn"
+                style={{ width: '100%', justifyContent: 'center', padding: '10px' }}
+                onClick={() => {
+                  setIsAdminAuthBlocked(false);
+                  setIsAuthModalOpen(true);
+                }}
+              >
+                🔐 Authenticate as Municipal Admin
+              </button>
+              <button
+                className="secondary-outline-btn"
+                style={{ width: '100%', justifyContent: 'center', padding: '10px' }}
+                onClick={() => {
+                  setIsAdminAuthBlocked(false);
+                  if (window.history.pushState) {
+                    window.history.pushState(null, '', '/');
+                  }
+                  setCurrentTab('dashboard');
+                }}
+              >
+                ← Return to Safe Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

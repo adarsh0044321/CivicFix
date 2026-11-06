@@ -52,6 +52,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/public/**").permitAll()
                 .requestMatchers("/api/v1/dev/**").permitAll()
                 .requestMatchers("/api/v1/ai/**").permitAll()
+                .requestMatchers("/api/v1/webhooks/**").permitAll()
 
                 // Complaint intake & listing open for demo and citizens
                 .requestMatchers("/api/v1/complaints/**").permitAll()

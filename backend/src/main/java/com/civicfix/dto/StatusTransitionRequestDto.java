@@ -20,6 +20,8 @@ public class StatusTransitionRequestDto {
     private String notes;
     private String resolutionPhotoUrl;
     private String disputeReason;
+    private String actorRole;
+    private String actorId;
 
     public StatusTransitionRequestDto() {}
 
@@ -34,4 +36,10 @@ public class StatusTransitionRequestDto {
 
     public String getDisputeReason() { return disputeReason; }
     public void setDisputeReason(String disputeReason) { this.disputeReason = disputeReason; }
+
+    public String getActorRole() { return actorRole; }
+    public void setActorRole(String actorRole) { this.actorRole = actorRole; }
+
+    public String getActorId() { return actorId; }
+    public void setActorId(String actorId) { this.actorId = actorId; }
 }

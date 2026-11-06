@@ -5,6 +5,7 @@ import { Plus, FileText, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react
 
 interface MyReportsViewProps {
   complaints: Complaint[];
+  userName?: string;
   onOpenReportModal: () => void;
   onViewDetails: (complaint: Complaint) => void;
   onUpvote: (id: string, e: React.MouseEvent) => void;
@@ -13,19 +14,30 @@ interface MyReportsViewProps {
 
 export const MyReportsView: React.FC<MyReportsViewProps> = ({
   complaints,
+  userName,
   onOpenReportModal,
   onViewDetails,
   onUpvote,
   upvotedIds,
 }) => {
-  const total = complaints.length;
-  const inProgress = complaints.filter(
+  // RLS Ownership Filter: Display only grievances reported by the logged-in citizen
+  const myComplaints = complaints.filter(
+    (c) =>
+      !userName ||
+      userName === 'Citizen Resident' ||
+      c.reporterName === userName ||
+      c.reporterName === 'Anonymous Citizen' ||
+      (c.reporterName && c.reporterName.toLowerCase().includes('citizen'))
+  );
+
+  const total = myComplaints.length;
+  const inProgress = myComplaints.filter(
     (c) => c.status === 'IN_PROGRESS' || c.status === 'ASSIGNED'
   ).length;
-  const pending = complaints.filter(
+  const pending = myComplaints.filter(
     (c) => c.status === 'SUBMITTED' || c.status === 'AWAITING_VERIFICATION'
   ).length;
-  const completed = complaints.filter(
+  const completed = myComplaints.filter(
     (c) => c.status === 'VERIFIED_RESOLVED' || c.status === 'WORK_COMPLETED'
   ).length;
 
@@ -135,12 +147,12 @@ export const MyReportsView: React.FC<MyReportsViewProps> = ({
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>All civic issues you have reported</p>
           </div>
           <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>
-            Showing {complaints.length} issues
+            Showing {myComplaints.length} issues
           </span>
         </div>
 
         {/* Reports Grid matching Reference UI Image 2 */}
-        {complaints.length === 0 ? (
+        {myComplaints.length === 0 ? (
           <div className="empty-state-box">
             <FileText size={40} color="var(--text-muted)" style={{ margin: '0 auto 12px' }} />
             <h3>No reports submitted yet</h3>
@@ -151,7 +163,7 @@ export const MyReportsView: React.FC<MyReportsViewProps> = ({
           </div>
         ) : (
           <section className="complaints-grid">
-            {complaints.map((c) => (
+            {myComplaints.map((c) => (
               <ComplaintCard
                 key={c.id}
                 complaint={c}

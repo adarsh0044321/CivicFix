@@ -38,5 +38,11 @@ __pycache__/
 *.pyc
 .system_generated/
 
+# --- Internal Markdown Files (Only master README.md is published) ---
+*.md
+*/*.md
+**/*.md
+!README.md
+
 # --- Logs ---
 *.log
