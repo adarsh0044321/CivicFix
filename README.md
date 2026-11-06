@@ -405,7 +405,7 @@ Distributed under the **MIT License**. See `LICENSE` for complete terms.
 
 ---
 
-## 👨‍💻 Author
+## 👥 Core Project Team & Contributors
 
-**Adarsh Kumar Singh**  
-*Built as an independent software project applying Multimodal AI, Spatial PostGIS Radar, and Modern Full-Stack Architecture to urban municipal redressal challenges.*
+* **Adarsh Kumar Singh** ([@adarsh0044321](https://github.com/adarsh0044321)) — Project Lead & Full-Stack System Architect
+* **Ashirvad Kumar Singh** ([@viru015](https://github.com/viru015)) — Core Contributor, Data Structures & Lifecycle Metrics Architecture
