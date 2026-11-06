@@ -406,7 +406,13 @@ Distributed under the **MIT License**. See `LICENSE` for complete terms.
 
 ---
 
-## 👥 Core Project Team & Contributors
+## 👥 Team: GIT PUSH PRAY
 
-* **Adarsh Kumar Singh** ([@adarsh0044321](https://github.com/adarsh0044321)) — Project Lead & Full-Stack System Architect
-* **Ashirvad Kumar Singh** ([@viru015](https://github.com/viru015)) — Core Contributor, Data Structures & Lifecycle Metrics Architecture
+**Institution**: Siksha 'O' Anusandhan (SOA University), Bhubaneswar
+
+| Contributor | Role & Domain | Responsibilities |
+| :--- | :--- | :--- |
+| **Adarsh Kumar Singh**<br>([@adarsh0044321](https://github.com/adarsh0044321)) | **Team Leader**<br>Full-Stack & Web Development | • Project technical leadership & system coordination.<br>• Java Spring Boot backend & React web portal integration. |
+| **Ashirvad Kumar Singh**<br>([@viru015](https://github.com/viru015)) | UI/UX Design, Presentation & Documentation | • Design system architecture & user workflow design.<br>• Pitch deck presentation design & comprehensive technical reports. |
+| **Nayam Raj**<br>([@Nayamraj-2K30](https://github.com/Nayamraj-2K30)) | Frontend Engineering & GIS Integration | • React & TypeScript responsive portal development.<br>• Mapbox GL JS maps, ward heatmaps & browser GPS integration. |
+| **Ujjawal Kumar**<br>([@ujjawalsinghrajput123](https://github.com/ujjawalsinghrajput123)) | Data Engineering, Database & SLA Governance | • Supabase & PostgreSQL schema, PostGIS spatial queries.<br>• 15-point priority scoring algorithm & SLA escalation logic. |
