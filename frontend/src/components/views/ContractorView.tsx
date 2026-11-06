@@ -533,7 +533,14 @@ export const ContractorView: React.FC<ContractorViewProps> = ({
                 {/* Live Photo Preview */}
                 {proofUrl && (
                   <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1.5px solid #0d9488', marginBottom: '12px', maxHeight: '180px' }}>
-                    <img src={proofUrl} alt="Repair Evidence" style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
+                    <img
+                      src={proofUrl}
+                      alt="Repair Evidence"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/dummyimages/road_repair_completed.svg';
+                      }}
+                      style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                    />
                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.7)', color: '#fff', padding: '6px 12px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: 600 }}>✓ Proof photo attached</span>
                       <button
@@ -569,7 +576,14 @@ export const ContractorView: React.FC<ContractorViewProps> = ({
                       }}
                     >
                       <div style={{ height: '70px', overflow: 'hidden' }}>
-                        <img src={preset.url} alt={preset.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img
+                          src={preset.url}
+                          alt={preset.label}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = '/dummyimages/road_repair_completed.svg';
+                          }}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
                       </div>
                       <div style={{ padding: '4px 6px', fontSize: '11px', fontWeight: 600, color: proofUrl === preset.url ? '#0d9488' : 'var(--text-primary)', textAlign: 'center' }}>
                         {preset.label}

@@ -66,6 +66,8 @@ export interface Complaint {
   departmentName?: string;
   assignedWorkerName?: string;
   reporterName?: string;
+  citizenRating?: number | null;
+  reviewTag?: string | null;
   createdAt: string;
   updatedAt?: string;
 }

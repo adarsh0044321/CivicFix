@@ -46,3 +46,6 @@ __pycache__/
 
 # --- Logs ---
 *.log
+
+# --- Backend Uploads ---
+backend/uploads/
