@@ -66,6 +66,8 @@ export interface Complaint {
   departmentName?: string;
   assignedWorkerName?: string;
   reporterName?: string;
+  citizenRating?: number | null;
+  reviewTag?: string | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -169,3 +171,26 @@ export interface PriorityBreakdown {
   rationale?: string;
 }
 
+
+export interface StatusLogEntry {
+  id: string;
+  complaintId: string;
+  fromStatus?: ComplaintStatus | null;
+  toStatus: ComplaintStatus;
+  remarks?: string | null;
+  changedByName?: string | null;
+  changedByRole?: string | null;
+  createdAt: string;
+}
+
+export interface CivicMetricsSummary {
+  totalComplaints: number;
+  activeComplaints: number;
+  resolvedComplaints: number;
+  overdueComplaints: number;
+  averageResolutionHours: number;
+  citizenSatisfactionAverage: number;
+  ratedCount: number;
+  categoryBreakdown: Record<string, number>;
+  statusBreakdown: Record<string, number>;
+}

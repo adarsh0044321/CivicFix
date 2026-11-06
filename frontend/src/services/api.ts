@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Complaint, CreateComplaintInput, UserRole, DuplicateCandidate, DuplicateCheckRequest, ComplaintStatus } from '../types';
+import type { Complaint, CreateComplaintInput, UserRole, DuplicateCandidate, DuplicateCheckRequest, ComplaintStatus, StatusLogEntry, CivicMetricsSummary } from '../types';
 
 export interface AuthResponse {
   token: string;
@@ -81,14 +81,30 @@ export const transitionComplaintStatus = async (
   targetStatus: ComplaintStatus,
   notes?: string,
   resolutionPhotoUrl?: string,
-  disputeReason?: string
+  disputeReason?: string,
+  rating?: number,
+  reviewTag?: string
 ): Promise<Complaint> => {
   const res = await apiClient.post<Complaint>(`/complaints/${id}/transition-status`, {
     targetStatus,
     notes,
     resolutionPhotoUrl,
     disputeReason,
+    rating,
+    reviewTag,
   });
+  return res.data;
+};
+
+// Data Structure Module (Ujjawal Singh Rajput): Status Audit Timeline
+export const getComplaintTimeline = async (id: string): Promise<StatusLogEntry[]> => {
+  const res = await apiClient.get<StatusLogEntry[]>(`/complaints/${id}/timeline`);
+  return res.data;
+};
+
+// Data Structure Module (Ujjawal Singh Rajput): Civic Analytics Summary
+export const getCivicMetricsSummary = async (): Promise<CivicMetricsSummary> => {
+  const res = await apiClient.get<CivicMetricsSummary>('/complaints/analytics/summary');
   return res.data;
 };
 

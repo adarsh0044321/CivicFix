@@ -4,6 +4,8 @@ import com.civicfix.dto.ComplaintResponseDto;
 import com.civicfix.dto.CreateComplaintRequestDto;
 import com.civicfix.dto.PriorityBreakdownDto;
 import com.civicfix.dto.StatusTransitionRequestDto;
+import com.civicfix.dto.StatusLogResponseDto;
+import com.civicfix.dto.CivicMetricsSummaryDto;
 import com.civicfix.service.ComplaintService;
 import com.civicfix.service.SlaEscalationScheduler;
 import jakarta.validation.Valid;
@@ -117,5 +119,23 @@ public class ComplaintController {
             @Valid @RequestBody StatusTransitionRequestDto request
     ) {
         return ResponseEntity.ok(complaintService.transitionStatus(id, request));
+    }
+
+    /**
+     * GET /api/v1/complaints/{id}/timeline - Audit trail history of status transitions
+     * Authored by Data Structure Module (Ujjawal Singh Rajput).
+     */
+    @GetMapping("/complaints/{id}/timeline")
+    public ResponseEntity<List<StatusLogResponseDto>> getComplaintTimeline(@PathVariable UUID id) {
+        return ResponseEntity.ok(complaintService.getComplaintTimeline(id));
+    }
+
+    /**
+     * GET /api/v1/complaints/analytics/summary - High-level civic performance metrics
+     * Authored by Data Structure Module (Ujjawal Singh Rajput).
+     */
+    @GetMapping("/complaints/analytics/summary")
+    public ResponseEntity<CivicMetricsSummaryDto> getCivicMetricsSummary() {
+        return ResponseEntity.ok(complaintService.getCivicMetricsSummary());
     }
 }

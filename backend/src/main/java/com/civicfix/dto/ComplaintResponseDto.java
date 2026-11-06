@@ -45,6 +45,9 @@ public class ComplaintResponseDto {
     private boolean isDuplicate;
     private String duplicateGroupId;
 
+    private Integer citizenRating;
+    private String reviewTag;
+
     private String departmentName;
     private String assignedWorkerName;
     private String reporterName;
@@ -89,6 +92,8 @@ public class ComplaintResponseDto {
 
         dto.isDuplicate = c.isDuplicate();
         dto.duplicateGroupId = c.getDuplicateGroupId();
+        dto.citizenRating = c.getCitizenRating();
+        dto.reviewTag = c.getReviewTag();
 
         dto.departmentName = c.getDepartment() != null ? c.getDepartment().getName() : "Unassigned";
         dto.assignedWorkerName = c.getAssignedWorker() != null ? c.getAssignedWorker().getFullName() : "Unassigned";
@@ -129,6 +134,10 @@ public class ComplaintResponseDto {
     public boolean isOverdue() { return isOverdue; }
     public boolean isDuplicate() { return isDuplicate; }
     public String getDuplicateGroupId() { return duplicateGroupId; }
+    public Integer getCitizenRating() { return citizenRating; }
+    public void setCitizenRating(Integer citizenRating) { this.citizenRating = citizenRating; }
+    public String getReviewTag() { return reviewTag; }
+    public void setReviewTag(String reviewTag) { this.reviewTag = reviewTag; }
     public String getDepartmentName() { return departmentName; }
     public String getAssignedWorkerName() { return assignedWorkerName; }
     public String getReporterName() { return reporterName; }

@@ -19,8 +19,10 @@ import {
   Upload,
   Camera,
   ShieldAlert,
+  History,
 } from 'lucide-react';
-import type { Complaint, UserRole, PriorityBreakdown, ComplaintStatus } from '../types';
+import type { Complaint, UserRole, PriorityBreakdown, ComplaintStatus, StatusLogEntry } from '../types';
+import { getComplaintTimeline } from '../services/api';
 
 interface ComplaintDetailModalProps {
   complaint: Complaint | null;
@@ -33,7 +35,9 @@ interface ComplaintDetailModalProps {
     targetStatus: ComplaintStatus,
     notes?: string,
     resolutionPhotoUrl?: string,
-    disputeReason?: string
+    disputeReason?: string,
+    rating?: number,
+    reviewTag?: string
   ) => Promise<any>;
 }
 
@@ -86,6 +90,8 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [selectedTag, setSelectedTag] = useState<string>('⚡ Prompt 24h SLA');
   const [savedRating, setSavedRating] = useState<number>(0);
+  const [timeline, setTimeline] = useState<StatusLogEntry[]>([]);
+  const [timelineLoading, setTimelineLoading] = useState<boolean>(false);
 
   // Synchronize internal state whenever incoming complaint prop changes
   useEffect(() => {
@@ -100,18 +106,36 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
         complaint.resolutionNotes ||
         `Field repair completed by ABC Construction Ltd for ${complaint.category.replace('_', ' ')}. Replaced components and verified stability.`
       );
-      try {
-        const stored = localStorage.getItem(`civicfix_rating_${complaint.id}`);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setUserRating(parsed.rating || 0);
-          setSavedRating(parsed.rating || 0);
-          if (parsed.tag) setSelectedTag(parsed.tag);
-        } else {
-          setUserRating(0);
-          setSavedRating(0);
-        }
-      } catch (e) {}
+      if (complaint.citizenRating && complaint.citizenRating > 0) {
+        setUserRating(complaint.citizenRating);
+        setSavedRating(complaint.citizenRating);
+        if (complaint.reviewTag) setSelectedTag(complaint.reviewTag);
+      } else {
+        try {
+          const stored = localStorage.getItem(`civicfix_rating_${complaint.id}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            setUserRating(parsed.rating || 0);
+            setSavedRating(parsed.rating || 0);
+            if (parsed.tag) setSelectedTag(parsed.tag);
+          } else {
+            setUserRating(0);
+            setSavedRating(0);
+          }
+        } catch (e) {}
+      }
+
+      setTimelineLoading(true);
+      getComplaintTimeline(complaint.id)
+        .then((logs) => {
+          if (logs && logs.length > 0) {
+            setTimeline(logs);
+          } else {
+            setTimeline([]);
+          }
+        })
+        .catch(() => setTimeline([]))
+        .finally(() => setTimelineLoading(false));
     }
   }, [complaint]);
 
@@ -191,6 +215,18 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
       localStorage.setItem('civicfix_all_ratings', JSON.stringify(existing));
       setSavedRating(star);
       window.dispatchEvent(new Event('civicfix_rating_updated'));
+
+      if (activeComplaint && onTransitionStatus) {
+        onTransitionStatus(
+          activeComplaint.id,
+          activeComplaint.status,
+          `Citizen updated rating to ${star}/5 stars (${selectedTag})`,
+          undefined,
+          undefined,
+          star,
+          selectedTag
+        ).catch(() => {});
+      }
     } catch (e) {
       console.warn('Could not save rating:', e);
     }
@@ -259,7 +295,11 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
       const updated = await onTransitionStatus(
         activeComplaint.id,
         'VERIFIED_RESOLVED',
-        'Citizen/Admin verified repair quality and confirmed problem is resolved on site.'
+        'Citizen/Admin verified repair quality and confirmed problem is resolved on site.',
+        undefined,
+        undefined,
+        userRating > 0 ? userRating : 5,
+        selectedTag
       );
       if (updated) {
         setCurrentComplaint(updated);
@@ -1466,6 +1506,94 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
         </div>
 
         {/* Footer Actions */}
+        {/* Data Structure Module (Ujjawal Singh Rajput): Status Audit Trail Timeline */}
+        <div
+          style={{
+            background: 'var(--bg-subtle)',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '20px',
+            border: '1px solid var(--border-color)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <History size={16} color="var(--primary-color)" />
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Status Audit Trail & Lifecycle History
+              </span>
+            </div>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              {timeline.length > 0 ? `${timeline.length} recorded transition${timeline.length > 1 ? 's' : ''}` : 'Immutable audit ledger'}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {timeline.length > 0 ? (
+              timeline.map((entry, idx) => (
+                <div
+                  key={entry.id || idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    padding: '8px 10px',
+                    background: 'var(--bg-card)',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    fontSize: '12px',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: entry.toStatus === 'VERIFIED_RESOLVED' ? '#10b981' : entry.toStatus === 'REOPENED_DISPUTED' ? '#ef4444' : '#3b82f6',
+                      marginTop: '5px',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {entry.fromStatus ? `${entry.fromStatus} → ${entry.toStatus}` : entry.toStatus}
+                      </span>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                        {entry.createdAt ? new Date(entry.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recorded'}
+                      </span>
+                    </div>
+                    {entry.remarks && (
+                      <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '11px' }}>
+                        {entry.remarks}
+                      </p>
+                    )}
+                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'inline-block', marginTop: '2px' }}>
+                      Logged by: <strong>{entry.changedByName || 'System Dispatcher'}</strong> ({entry.changedByRole || 'SYSTEM'})
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  background: 'var(--bg-card)',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
+                <span>Current Status: <strong>{activeComplaint.status}</strong> (Initial intake logged via citizen portal)</span>
+              </div>
+            )}
+          </div>
+        </div>
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
           {/* Strictly 1-Vote Confirmation Button */}
           <button

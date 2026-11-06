@@ -132,6 +132,13 @@ public class Complaint {
     @Column(name = "duplicate_group_id", length = 50)
     private String duplicateGroupId;
 
+    // Citizen Resolution Rating & Review Feedback (Data Structure Enhancement)
+    @Column(name = "citizen_rating")
+    private Integer citizenRating; // 1 to 5 stars
+
+    @Column(name = "review_tag", length = 100)
+    private String reviewTag; // e.g. "Prompt 24h SLA", "High Quality Fix" 
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -239,6 +246,12 @@ public class Complaint {
 
     public String getDuplicateGroupId() { return duplicateGroupId; }
     public void setDuplicateGroupId(String duplicateGroupId) { this.duplicateGroupId = duplicateGroupId; }
+
+    public Integer getCitizenRating() { return citizenRating; }
+    public void setCitizenRating(Integer citizenRating) { this.citizenRating = citizenRating; }
+
+    public String getReviewTag() { return reviewTag; }
+    public void setReviewTag(String reviewTag) { this.reviewTag = reviewTag; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

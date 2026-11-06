@@ -22,6 +22,8 @@ public class StatusTransitionRequestDto {
     private String disputeReason;
     private String actorRole;
     private String actorId;
+    private Integer rating;
+    private String reviewTag;
 
     public StatusTransitionRequestDto() {}
 
@@ -42,4 +44,10 @@ public class StatusTransitionRequestDto {
 
     public String getActorId() { return actorId; }
     public void setActorId(String actorId) { this.actorId = actorId; }
+
+    public Integer getRating() { return rating; }
+    public void setRating(Integer rating) { this.rating = rating; }
+
+    public String getReviewTag() { return reviewTag; }
+    public void setReviewTag(String reviewTag) { this.reviewTag = reviewTag; }
 }
