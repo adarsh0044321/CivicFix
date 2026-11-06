@@ -314,8 +314,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 <input
                   type="tel"
                   value={citizenPhone}
-                  onChange={(e) => setCitizenPhone(e.target.value)}
-                  placeholder="+1 (555) 000-0000"
+                  onChange={(e) => setCitizenPhone(e.target.value.replace(/[^0-9+\-\s()]/g, ''))}
+                  placeholder="+91 98765 43210"
                   style={{
                     width: '100%',
                     padding: '10px 14px',
@@ -390,8 +390,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 <input
                   type="tel"
                   value={contractorPhone}
-                  onChange={(e) => setContractorPhone(e.target.value)}
-                  placeholder="+1 (555) 000-0000"
+                  onChange={(e) => setContractorPhone(e.target.value.replace(/[^0-9+\-\s()]/g, ''))}
+                  placeholder="+91 98765 43210"
                   style={{
                     width: '100%',
                     padding: '10px 14px',

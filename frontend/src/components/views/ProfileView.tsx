@@ -29,10 +29,53 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       : 'Citizen Resident • Ward 12'
   );
   const [phone, setPhone] = useState('+91 98765 43210');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+
+  const validateEmail = (val: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val.trim());
+  };
+
+  const validatePhone = (val: string) => {
+    const digits = val.replace(/\D/g, '');
+    return digits.length >= 10 && digits.length <= 15;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Only allow numbers, plus sign, spaces, hyphens and parentheses
+    const sanitized = e.target.value.replace(/[^0-9+\-\s()]/g, '');
+    setPhone(sanitized);
+    if (sanitized && !validatePhone(sanitized)) {
+      setPhoneError('Please enter a valid 10-digit phone number (e.g. +91 98765 43210)');
+    } else {
+      setPhoneError(null);
+    }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (e.target.value && !validateEmail(e.target.value)) {
+      setEmailError('Please enter a valid email address (e.g. name@domain.com)');
+    } else {
+      setEmailError(null);
+    }
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address (e.g. name@domain.com)');
+      return;
+    }
+    if (!validatePhone(phone)) {
+      setPhoneError('Please enter a valid 10-digit phone number (e.g. +91 98765 43210)');
+      return;
+    }
+
+    setEmailError(null);
+    setPhoneError(null);
     onUpdateName(name);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -96,10 +139,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 type="email"
                 className="custom-input"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 required
+                style={{ borderColor: emailError ? '#ef4444' : undefined }}
               />
             </div>
+            {emailError && (
+              <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 600, marginTop: '4px', display: 'block' }}>
+                {emailError}
+              </span>
+            )}
           </div>
 
           {/* Organization matching Screenshot 5 */}
@@ -127,12 +176,20 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <Phone size={16} color="var(--text-muted)" />
               </div>
               <input
-                type="text"
+                type="tel"
                 className="custom-input"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={handlePhoneChange}
+                placeholder="+91 98765 43210"
+                required
+                style={{ borderColor: phoneError ? '#ef4444' : undefined }}
               />
             </div>
+            {phoneError && (
+              <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 600, marginTop: '4px', display: 'block' }}>
+                {phoneError}
+              </span>
+            )}
           </div>
 
           {/* Save Changes Teal Button matching Screenshot 5 */}

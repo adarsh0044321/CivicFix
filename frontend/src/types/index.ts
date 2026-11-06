@@ -90,6 +90,7 @@ export interface NotificationItem {
   timestamp: string;
   read: boolean;
   type: 'approval' | 'assignment' | 'completion' | 'urgent';
+  complaintId?: string;
 }
 
 export interface ContractorTask {

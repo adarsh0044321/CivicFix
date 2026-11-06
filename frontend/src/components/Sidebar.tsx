@@ -9,6 +9,7 @@ import {
   LogOut,
   Hammer,
   FileSpreadsheet,
+  PlusCircle,
 } from 'lucide-react';
 import type { UserRole } from '../types';
 
@@ -105,6 +106,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
               : 'Dashboard'}
           </span>
         </button>
+
+        {/* Mobile-Only Citizen Quick Report Action */}
+        {currentRole === 'CITIZEN' && (
+          <button
+            className="nav-item mobile-only-report"
+            onClick={onOpenReportModal}
+            title="Report a new civic issue"
+            style={{ color: '#0d9488', fontWeight: 700 }}
+          >
+            <PlusCircle size={20} color="#0d9488" />
+            <span>+ Report</span>
+          </button>
+        )}
 
         {/* Role-Specific Reports Tab */}
         <button

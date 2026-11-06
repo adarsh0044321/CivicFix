@@ -2,7 +2,7 @@ import React from 'react';
 import { StatCards } from '../StatCards';
 import { ComplaintCard } from '../ComplaintCard';
 import type { Complaint } from '../../types';
-import { UserCheck, AlertCircle, Clock, Loader2, CheckCircle2, Hammer } from 'lucide-react';
+import { UserCheck, AlertCircle, Clock, Loader2, CheckCircle2, Hammer, FileSpreadsheet } from 'lucide-react';
 
 interface CitizenDashboardViewProps {
   userName: string;
@@ -60,9 +60,19 @@ export const CitizenDashboardView: React.FC<CitizenDashboardViewProps> = ({
   return (
     <div className="view-container">
       {/* Page Header (Screenshot 1) */}
-      <div className="page-header">
-        <h1 className="page-title">Dashboard</h1>
-        <p className="page-subtitle">Welcome back, {userName}</p>
+      <div className="page-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-subtitle">Welcome back, {userName}</p>
+        </div>
+        <button
+          className="report-action-btn"
+          onClick={onOpenReportModal}
+          style={{ width: 'auto', padding: '10px 20px', borderRadius: '8px', fontSize: '13px' }}
+        >
+          <FileSpreadsheet size={16} />
+          <span>+ Report an Issue</span>
+        </button>
       </div>
 
       {/* 4 Responsive Interactive Stat Cards */}

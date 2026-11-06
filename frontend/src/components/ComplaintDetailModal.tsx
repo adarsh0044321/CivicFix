@@ -21,6 +21,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import type { Complaint, UserRole, PriorityBreakdown, ComplaintStatus } from '../types';
+import { uploadComplaintImage } from '../services/api';
 
 interface ComplaintDetailModalProps {
   complaint: Complaint | null;
@@ -77,6 +78,7 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
 
   // Contractor Field Resolution Proof Upload States (Phase 11 & 13)
   const detailFileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [contractorProofFile, setContractorProofFile] = useState<File | null>(null);
   const [contractorProofUrl, setContractorProofUrl] = useState<string>('');
   const [contractorProofName, setContractorProofName] = useState<string>('');
   const [contractorNotes, setContractorNotes] = useState<string>('');
@@ -93,6 +95,7 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
     setIsDisputing(false);
     setIsReopening(false);
     setDisputeInput('');
+    setContractorProofFile(null);
     if (complaint) {
       setContractorProofUrl(complaint.resolutionImageUrl || getCategoryRepairSvg(complaint.category));
       setContractorProofName('');
@@ -120,12 +123,9 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
   const handleDetailFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      setContractorProofFile(file);
       setContractorProofName(file.name);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setContractorProofUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setContractorProofUrl(URL.createObjectURL(file));
     }
   };
 
@@ -162,9 +162,17 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
     setActionLoading(true);
     try {
       const finalNotes = contractorNotes.trim() || `Field repair completed by ABC Construction Ltd according to municipal specifications.`;
-      const finalProofUrl = contractorProofUrl || getCategoryRepairSvg(activeComplaint.category);
+      let finalProofUrl = contractorProofUrl || getCategoryRepairSvg(activeComplaint.category);
+      if (contractorProofFile) {
+        try {
+          finalProofUrl = await uploadComplaintImage(contractorProofFile);
+        } catch (uploadErr) {
+          console.warn('Media upload fallback:', uploadErr);
+        }
+      }
       const updated = await onTransitionStatus(activeComplaint.id, 'AWAITING_VERIFICATION', finalNotes, finalProofUrl);
       if (updated) setCurrentComplaint(updated);
+      setContractorProofFile(null);
     } catch (e) {
       console.warn('Resolution submission error:', e);
     } finally {

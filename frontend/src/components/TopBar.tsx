@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Search, Sun, Moon, Bell, User, FileText, LogOut, ArrowRightLeft, Shield, Wrench } from 'lucide-react';
-import type { UserRole, NotificationItem } from '../types';
+import type { UserRole, NotificationItem, Complaint } from '../types';
 import { NotificationsPopover } from './NotificationsPopover';
 
 interface TopBarProps {
@@ -15,6 +15,8 @@ interface TopBarProps {
   onOpenLoginModal: () => void;
   onLogout: () => void;
   onSwitchRole?: (role: UserRole) => void;
+  complaints?: Complaint[];
+  onSelectComplaint?: (complaint: Complaint) => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -29,48 +31,168 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenLoginModal,
   onLogout,
   onSwitchRole,
+  complaints = [],
+  onSelectComplaint,
 }) => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
+  // Read status persistence
+  const [readNotifIds, setReadNotifIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('civicfix_read_notifs');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsMenuOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setIsNotifOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const notifications: NotificationItem[] = [
-    {
-      id: '1',
-      title: 'Your report has been approved',
-      subtitle: 'Pothole on Main Street is now in bidding phase',
-      timestamp: '2 hours ago',
-      read: false,
-      type: 'approval',
-    },
-    {
-      id: '2',
-      title: 'Contractor assigned',
-      subtitle: 'ABC Construction will fix the broken water main',
-      timestamp: 'Yesterday',
-      read: false,
-      type: 'assignment',
-    },
-    {
-      id: '3',
-      title: 'Work completed',
-      subtitle: 'Graffiti removal has been marked as complete',
-      timestamp: '3 days ago',
-      read: true,
-      type: 'completion',
-    },
-  ];
+  // Generate dynamic, real-time notifications from active complaints and role
+  const dynamicNotifications: NotificationItem[] = useMemo(() => {
+    const items: NotificationItem[] = [];
+
+    complaints.forEach((c) => {
+      const isRead = readNotifIds.has(c.id);
+
+      if (currentRole === 'CITIZEN') {
+        if (c.status === 'VERIFIED_RESOLVED') {
+          items.push({
+            id: `notif-res-${c.id}`,
+            complaintId: c.id,
+            title: 'Resolution Officially Verified & Closed',
+            subtitle: `Ticket #${c.complaintId}: ${c.title}`,
+            timestamp: 'Action Complete',
+            read: isRead,
+            type: 'completion',
+          });
+        } else if (c.status === 'AWAITING_VERIFICATION') {
+          items.push({
+            id: `notif-ver-${c.id}`,
+            complaintId: c.id,
+            title: 'Citizen Verification Requested',
+            subtitle: `Contractor finished repair on #${c.complaintId}. Confirm fix quality.`,
+            timestamp: 'Requires Action',
+            read: isRead,
+            type: 'approval',
+          });
+        } else if (c.status === 'IN_PROGRESS') {
+          items.push({
+            id: `notif-prog-${c.id}`,
+            complaintId: c.id,
+            title: 'Field Repair Mobilized',
+            subtitle: `Assigned contractor is actively repairing #${c.complaintId}.`,
+            timestamp: 'In Progress',
+            read: isRead,
+            type: 'assignment',
+          });
+        }
+      } else if (currentRole === 'ADMIN') {
+        if (c.priorityScore >= 11 || c.urgency === 'HIGH') {
+          items.push({
+            id: `notif-crit-${c.id}`,
+            complaintId: c.id,
+            title: `Critical Grievance (${c.priorityScore}/15)`,
+            subtitle: `Immediate dispatch needed for #${c.complaintId}: ${c.title}`,
+            timestamp: 'Urgent Triage',
+            read: isRead,
+            type: 'urgent',
+          });
+        }
+        if (c.status === 'AWAITING_VERIFICATION') {
+          items.push({
+            id: `notif-admin-ver-${c.id}`,
+            complaintId: c.id,
+            title: 'Repair Proof Awaiting Audit',
+            subtitle: `Contractor submitted photographic proof for ticket #${c.complaintId}.`,
+            timestamp: 'Inspection Ready',
+            read: isRead,
+            type: 'approval',
+          });
+        }
+      } else if (currentRole === 'WORKER') {
+        if (c.status === 'ASSIGNED') {
+          items.push({
+            id: `notif-work-assign-${c.id}`,
+            complaintId: c.id,
+            title: 'New Work Order Dispatched',
+            subtitle: `Municipal triage dispatched ticket #${c.complaintId} (${c.category}).`,
+            timestamp: 'Pending Acceptance',
+            read: isRead,
+            type: 'assignment',
+          });
+        } else if (c.status === 'REOPENED_DISPUTED') {
+          items.push({
+            id: `notif-work-reopen-${c.id}`,
+            complaintId: c.id,
+            title: 'Work Order Disputed / Reopened',
+            subtitle: `Resident rejected resolution for #${c.complaintId}. Re-inspection required.`,
+            timestamp: 'Attention Needed',
+            read: isRead,
+            type: 'urgent',
+          });
+        }
+      }
+    });
+
+    // Fallback notification if no complaints match
+    if (items.length === 0) {
+      items.push({
+        id: 'notif-welcome',
+        title: 'Municipal System Synchronized',
+        subtitle: 'All civic grievances in your ward are monitored under SLA enforcement.',
+        timestamp: 'Just now',
+        read: readNotifIds.has('notif-welcome'),
+        type: 'approval',
+      });
+    }
+
+    return items.slice(0, 8);
+  }, [complaints, currentRole, readNotifIds]);
+
+  const unreadCount = dynamicNotifications.filter((n) => !n.read).length;
+
+  const handleMarkAllRead = () => {
+    const allIds = new Set(readNotifIds);
+    dynamicNotifications.forEach((n) => {
+      allIds.add(n.id);
+      if (n.complaintId) allIds.add(n.complaintId);
+    });
+    setReadNotifIds(allIds);
+    try {
+      localStorage.setItem('civicfix_read_notifs', JSON.stringify(Array.from(allIds)));
+    } catch {}
+  };
+
+  const handleSelectNotification = (item: NotificationItem) => {
+    const allIds = new Set(readNotifIds);
+    allIds.add(item.id);
+    if (item.complaintId) allIds.add(item.complaintId);
+    setReadNotifIds(allIds);
+    try {
+      localStorage.setItem('civicfix_read_notifs', JSON.stringify(Array.from(allIds)));
+    } catch {}
+
+    if (item.complaintId && onSelectComplaint) {
+      const match = complaints.find((c) => c.id === item.complaintId || c.complaintId === item.complaintId);
+      if (match) onSelectComplaint(match);
+    }
+  };
 
   return (
     <header className="topbar">
@@ -164,21 +286,24 @@ export const TopBar: React.FC<TopBarProps> = ({
           {isDarkMode ? <Sun size={18} color="#f59e0b" /> : <Moon size={18} color="#0f172a" />}
         </button>
 
-        {/* Notifications Bell with Red Dot */}
-        <div style={{ position: 'relative' }}>
+        {/* Notifications Bell with Dynamic Red Dot & Counter */}
+        <div style={{ position: 'relative' }} ref={notifRef}>
           <button
             className="icon-btn"
             onClick={() => setIsNotifOpen((prev) => !prev)}
             title="View Notifications"
           >
             <Bell size={18} />
-            <span className="notification-dot" />
+            {unreadCount > 0 && <span className="notification-dot" />}
           </button>
 
           <NotificationsPopover
             isOpen={isNotifOpen}
             onClose={() => setIsNotifOpen(false)}
-            notifications={notifications}
+            notifications={dynamicNotifications}
+            onMarkAllRead={handleMarkAllRead}
+            onSelectNotification={handleSelectNotification}
+            onViewAll={() => onNavigateTab(currentRole === 'ADMIN' ? 'reports' : 'reports')}
           />
         </div>
 

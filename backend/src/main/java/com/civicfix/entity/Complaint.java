@@ -86,10 +86,10 @@ public class Complaint {
     private LocationConfidence locationConfidence = LocationConfidence.HIGH_EXACT_GPS;
 
     // Media & Regional Input
-    @Column(name = "image_url", length = 500)
+    @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
-    @Column(name = "resolution_image_url", length = 500)
+    @Column(name = "resolution_image_url", columnDefinition = "TEXT")
     private String resolutionImageUrl;
 
     @Column(name = "resolution_notes", columnDefinition = "TEXT")
@@ -98,7 +98,7 @@ public class Complaint {
     @Column(name = "dispute_reason", columnDefinition = "TEXT")
     private String disputeReason;
 
-    @Column(name = "audio_url", length = 500)
+    @Column(name = "audio_url", columnDefinition = "TEXT")
     private String audioUrl;
 
     @Column(name = "original_language_text", columnDefinition = "TEXT")

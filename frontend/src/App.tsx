@@ -300,6 +300,8 @@ export default function App() {
           onOpenLoginModal={() => setIsAuthModalOpen(true)}
           onLogout={handleLogout}
           onSwitchRole={(role) => handleSwitchRole(role)}
+          complaints={complaints}
+          onSelectComplaint={setSelectedComplaint}
         />
 
         {/* Dynamic Page Views */}

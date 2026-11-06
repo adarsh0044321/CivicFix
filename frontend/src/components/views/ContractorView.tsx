@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Hammer, CheckCircle2, Star, MapPin, Clock, ArrowRight, ShieldAlert, Upload, Play, X, Loader2, Camera } from 'lucide-react';
 import type { Complaint, ComplaintStatus } from '../../types';
+import { uploadComplaintImage } from '../../services/api';
 
 interface ContractorViewProps {
   complaints: Complaint[];
@@ -104,16 +105,14 @@ export const ContractorView: React.FC<ContractorViewProps> = ({
     }
   };
 
+  const [selectedProofFile, setSelectedProofFile] = useState<File | null>(null);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      setSelectedProofFile(file);
       setSelectedFileName(file.name);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        setProofUrl(dataUrl);
-      };
-      reader.readAsDataURL(file);
+      setProofUrl(URL.createObjectURL(file));
     }
   };
 
@@ -128,6 +127,8 @@ export const ContractorView: React.FC<ContractorViewProps> = ({
 
   const handleOpenUploadModal = (item: Complaint) => {
     setModalItem(item);
+    setSelectedProofFile(null);
+    setSelectedFileName('');
     const presets = getPresetProofPhotos(item.category);
     setProofUrl(presets[0]?.url || '/dummyimages/road_repair_completed.svg');
     setWorkNotes(`Field repair executed for ${item.category.replace('_', ' ')}. Replaced components and verified stability.`);
@@ -138,13 +139,22 @@ export const ContractorView: React.FC<ContractorViewProps> = ({
     if (!modalItem || !onTransitionStatus) return;
     setIsSubmitting(true);
     try {
+      let finalUrl = proofUrl;
+      if (selectedProofFile) {
+        try {
+          finalUrl = await uploadComplaintImage(selectedProofFile);
+        } catch (uploadErr) {
+          console.warn('Media upload fallback to data/blob URL:', uploadErr);
+        }
+      }
       await onTransitionStatus(
         modalItem.id,
         'AWAITING_VERIFICATION',
         workNotes,
-        proofUrl
+        finalUrl
       );
       setModalItem(null);
+      setSelectedProofFile(null);
     } catch (e: any) {
       alert(e.message || 'Failed to submit proof');
     } finally {
